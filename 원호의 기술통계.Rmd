@@ -8,6 +8,7 @@ output: html_document
 ```{r setup, include=FALSE}
 library(ggplot2)
 library(dplyr)
+library(psych)
 apt_dt <- read.csv("apt_final.csv")
 head(apt_dt)
 ```
@@ -61,6 +62,8 @@ summary_apt <- summary_apt[-c(4,7,10,13,16,19)]
 summary_apt
 
 by(apt_dt$평당가격, apt_dt$지역, summary)
+
+psych::describeBy(apt_dt$평당가격, apt_dt$지역)
 
 apt_dt %>% ggplot() +
   theme_set(theme_gray(base_family = 'AppleMyungjo'))+
