@@ -1,0 +1,11 @@
+---
+title: "차원축소"
+author: "202021540 박유선"
+date: '2021 6 20 '
+output: html_document
+---
+```{r}
+apt<- read.csv("apt_final_1.csv")
+
+```
+
