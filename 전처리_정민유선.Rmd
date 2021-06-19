@@ -1,6 +1,6 @@
 ---
 title: "차원축소"
-author: "1조 박유선 성원호 허정민민"
+author: "1조 박유선 성원호 허정민"
 date: '2021 6 19 '
 output: html_document
 ---
