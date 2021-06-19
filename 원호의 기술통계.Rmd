@@ -1,0 +1,74 @@
+---
+title: "분석_원호"
+author: "성원호"
+date: "6/19/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(ggplot2)
+library(dplyr)
+library(psych)
+apt_dt <- read.csv("apt_final.csv")
+head(apt_dt)
+```
+
+```{r}
+# 지역에 따른 아파트 기술 통계
+apt_mean_1 <- aggregate(매매가~ 지역, apt_dt, mean)
+apt_mean_2 <- aggregate(평당가격 ~ 지역, apt_dt, mean)
+apt_mean <- inner_join(apt_mean_1, apt_mean_2,
+           by = c('지역' = '지역'))
+colnames(apt_mean)[2] <- "매매가 평균" ; colnames(apt_mean)[3] <- "평당가 평균"
+head(apt_mean)
+
+apt_median_1 <- aggregate(매매가~지역, apt_dt, median)
+apt_median_2 <- aggregate(평당가격~지역, apt_dt, median)
+apt_median <- inner_join(apt_median_1, apt_median_2,
+                         by = c('지역' = '지역'))
+colnames(apt_median)[2] <- "매매가 중앙값" ; colnames(apt_median)[3] <- "평당가 중앙값"
+head(apt_median)
+
+apt_min_1 <- aggregate(매매가~ 지역, apt_dt, min)
+apt_min_2 <- aggregate(평당가격 ~ 지역, apt_dt, min)
+apt_min <- inner_join(apt_min_1, apt_min_2,
+           by = c('지역' = '지역'))
+colnames(apt_min)[2] <- "매매가 최소" ; colnames(apt_min)[3] <- "평당가 최소"
+head(apt_min)
+
+apt_max_1 <- aggregate(매매가~ 지역, apt_dt, max)
+apt_max_2 <- aggregate(평당가격 ~ 지역, apt_dt, max)
+apt_max <- inner_join(apt_max_1, apt_max_2,
+           by = c('지역' = '지역'))
+colnames(apt_max)[2] <- "매매가 최대" ; colnames(apt_max)[3] <- "평당가 최대"
+head(apt_max)
+
+apt_var_1 <- aggregate(매매가~ 지역, apt_dt, var)
+apt_var_2 <- aggregate(평당가격 ~ 지역, apt_dt, var)
+apt_var <- inner_join(apt_var_1, apt_var_2,
+           by = c('지역' = '지역'))
+colnames(apt_var)[2] <- "매매가 분산" ; colnames(apt_max)[3] <- "평당가 분산"
+head(apt_var)
+
+apt_sd_1 <- aggregate(매매가~ 지역, apt_dt, sd)
+apt_sd_2 <- aggregate(평당가격 ~ 지역, apt_dt, sd)
+apt_sd <- inner_join(apt_sd_1, apt_sd_2,
+           by = c('지역' = '지역'))
+colnames(apt_sd)[2] <- "매매가 표준편차" ; colnames(apt_sd)[3] <- "평당가 표준편차"
+head(apt_sd)
+
+summary_apt <- cbind(apt_mean, apt_median, apt_min, apt_max, apt_var, apt_sd)
+summary_apt <- summary_apt[-c(4,7,10,13,16,19)]
+summary_apt
+
+by(apt_dt$평당가격, apt_dt$지역, summary)
+
+psych::describeBy(apt_dt$평당가격, apt_dt$지역)
+
+apt_dt %>% ggplot() +
+  theme_set(theme_gray(base_family = 'AppleMyungjo'))+
+  geom_bar(mapping = aes(x = 지역, y = 평당가격),
+           stat = "identity", width = 0.3, fill = 'darkblue')
+  
+
+```
