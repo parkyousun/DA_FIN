@@ -1,4 +1,13 @@
 ```{r}
+apt<- read.csv("gu_data.csv")
 
+price<- apt$평당가격
+
+apt_ca<- apt[,c(-1,-2,-9)]
+
+
+apt_scaled<- scale(apt_ca)
+apt_dist<- dist(apt_scaled, method = "euclidean")
+str(apt_dist)
 ```
 
