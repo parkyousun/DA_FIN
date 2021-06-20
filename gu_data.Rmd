@@ -1,12 +1,3 @@
-```{r}
-public_health<- read.csv("서울시 동별 보건소 및 보건분소.csv")
-household<- read.csv("서울시 동별 세대원수별 세대수.csv")
-real_estate<- read.csv("서울시 동별 아파트 매매거래 현황.csv")
-foreign_stud<- read.csv("서울시 외국인 유학생 현황.csv")
-
-head(real_estate)
-table
-```
 
 ```{r}
 apt<- read.csv("apt_final_1.csv")
@@ -17,5 +8,36 @@ str(apt_1)
 apt_1
 
 write.csv(apt_1, "gu_data.csv")
+```
+
+```{r}
+gu<- read.csv("gu_data.csv")
+library<- read.csv("서울시 공공도서관.csv")
+passport<- read.csv("서울시 여권 발급.csv")
+car<- read.csv("서울시 자동차 등록.csv")
+
+car<- car[-1,c(2,5)]
+library<- library[,c(2,5,8)]
+passport<- passport[-1,2:3]
+
+library(dplyr)
+
+car<- rename(car, 지역 = 자치구)
+library<- rename(library, 지역 = 자치구)
+passport<- rename(passport, 지역 = 자치구)
+
+
+a<- merge(gu, car, by = "지역")
+b<- merge(a, library, by="지역")
+c<- merge(b, passport, by="지역")
+
+str(c)
+c<- rename(c, 여권발급합계= 합계)
+c<- rename(c, 보유도서합계 = 도서)
+c<- c[,-2]
+c[,12]<-gsub(",", "", c[,12])
+c[,12]<-as.numeric(c[,12])
+
+write.csv("gu_data_2.csv")
 ```
 
