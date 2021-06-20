@@ -5,16 +5,9 @@ date: '2021 6 20 '
 output: html_document
 ---
 ```{r}
-apt<- read.csv("apt_final_1.csv")
+apt<- read.csv("apt_2021_window.csv")
 
-sum(is.na(apt))
-
-str(apt)
-
-table(apt$`최근.매매.연도`)
-
-apt$` 최근 매매 연도`<- as.character(apt$` 최근 매매 연도`)
-
-apt$`최근 매매 월`<- as.factor(apt$`최근 매매 월`)
+apt_var<- apt[,]
+diag(var(apt))
 ```
 
