@@ -178,7 +178,6 @@ library(ggplot2)
 library(car)
 library(nortest)
 library(psych)
-
 ```
 
 
