@@ -11,10 +11,7 @@ library(dplyr)
 library(psych)
 library(sjmisc)
 library(gridExtra)
-library(KoNLP)
-library(rJava)
-library(multilinguer)
-library(rvest)
+
 apt_dt <- read.csv("apt_final.csv")
 head(apt_dt)
 str(apt_dt)
@@ -229,7 +226,7 @@ result_b <- grid.arrange(b_2020, b_2021, ncol = 2) ; result_b
 ```
 * 강남~동작까지 2020년도 자료를 살펴보면 2020년도 5월부터 관악구를 제외한 대부분의 구가 같은 증가 양상을 보이고 있음을 알 수 있다. 또한 7월~8월 사이에 집값 양극화 현상이 생기기 시작하는 것을 볼 수 있다. 5~6월에 급격하게 증가했던 집값들의 대부분이 다시 하락하고 관악, 동대문, 강동 등의 지역들은 꾸준히 증가한다. 8월부터 구마다 변동률이 상이하고 관악구와 동작구, 강동구의 상승률이 두드러지게 보이는 것을 알 수 있었다. 10월에 꾸준히 올랐던 관악구의 집값이 전저점보다 하락하는 모습을 보였고, 12월에는 강남의 집값이 급상승하는 모습을 보였다. 2021년 자료를 보면 동작구의 증감률이 두드러지고 3-4월 사이에 대체적으로 안정, 상승세를 보였다.
 * 마포~중랑까지의 2020년도 자료 역시 마찬가지로 강남~동작과 비슷한 형태를 보인다. 특히 서초구와 송파구의 변동성이 12월까지 꾸준히 변하는 모습을 보였다. 2021년도 마찬가지로 서초, 송파, 양천 등 급격한 변동을 보였던 구들의 변동성이 매우 큰 것으로 나타났다.
-* 구별 평균 아파트 매매가는 생각보다 변동성이 두드러졌고, 특히 극단적인 변화 양상을 보였던 관악, 동작, 강동, 강남, 서초, 송파, 양천은 증감률이 +- 20%를 넘어갔다. 때문에 해당 지역을 중심으로 극단적인 가격 변화를 일으킨 요인에 대해 알아보고자 텍스트 마이닝을 실시해보기로 했다.
+* 구별 평균 아파트 매매가는 생각보다 변동성이 두드러졌고, 특히 극단적인 변화 양상을 보였던 관악, 동작, 강동, 강남, 서초, 송파, 양천은 증감률이 +- 20%를 넘어갔다. 때문에 해당 지역을 중심으로 극단적인 가격 변화를 일으킨 점을 알 수 있었다. 이러한 이유에 대해서는 향후 분석에서 알아보고자 한다.
 
 ```{r}
 new_percent <- plyr::join_all(list(a, b, e, l, o, r, s), by="지역", type="full")
@@ -277,62 +274,4 @@ apart_price_3 %>% ggplot(aes(x =지역, y=평당가격, color = factor(건축.�
   theme(plot.title=element_text(hjust = 0.5, size = 15, color = "black"))+
   theme(axis.text.x = element_text(angle = 45))
 ```
-```{r}
-base <- "https://search.naver.com/search.naver?&where=news&query="
-query <- "아파트+정책"
-base_2 <- "&pd=3&ds="
-base_3 <- "&de="
-base_4 <- "&start="
-page <- seq(from=1, to=41, by=10)
-urls <- NULL
-start <- as.Date(as.character(20200501), format="%Y%m%d")
-end <- as.Date(as.character(20210501), format="%Y%m%d")
-date <- start:end
-date <- as.Date(date, origin="1970-01-01")
 
-urls_list <- c()
-for (date_i in date){
-  for(page_i in page){
-    dt <- format(as.Date(date_i, origin = "1970-01-01"), "%Y.%m.%d")
-    urls <- paste0(base,query,base_2,date,base_3,date,base_4,page)
-    urls_list <- c(urls_list, urls)
-  }
-}
-
-html <- read_html(urls[1])
-html
-
-news <- NULL
-for(url in urls){
-  html <- read_html(url)
-  news <- c(news, html %>%
-              html_nodes('ul.type01 > li > dl > dd > a') %>%
-              html_attr('href')
-            )
-}
-#sp_nws1 > div > div > div.news_info > div.info_group > a:nth-child(3)
-news
-
-contents <- NULL
-title <- NULL
-
-for(link in news){
-  html <- read_html(link)
-}
-
-contents <- c(contents, html %>%
-                html_nodes('#articleBodyContents')%>%
-                html_text())
-
-title <- c(title, html %>%
-             html_nodes('title') %>%
-             html_text())
-title
-
-
-contents_df <- as.data.frame(contents)
-contents_df
-title_df <- as.data.frame(title)
-title_df
-news_final <- cbind(title_df, contents_df)
-```
