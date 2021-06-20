@@ -1,0 +1,182 @@
+```{r}
+apt <- read.csv("apt_final_1.csv")
+str(apt)
+colnames(apt)[c(3,4,5,6,17)] <- c("건축 연도"," 최근 매매 연도","아파트 이름","최근 매매 월","해당 지역 지하철 지점수")
+colnames(apt)
+
+```
+
+# 상관계수
+# 교통 수단 ( 교통의 편리성 ) , 공원의 수
+```{r}
+#install.packages("ggplot2")
+#install.packages("corrplot")
+library(ggplot2)
+library(corrplot)
+
+
+cor.var <- apt[c("평당가격", "해당 지역 지하철 지점수","국립공원수","범죄발생수")]
+round(cor(cor.var, use = "pairwise.complete.obs"),4) # 소숫점 4자리수까지 조정을 하고 cor함수를 사용하였다
+
+
+# 상관계수를 파악하기 전, 산점도로 변수간의 관련성을 그림으로 시각화
+plot(cor.var, cex = 1, pch = 1, col = "blue") #그래프로 분포 확인 #지역별로 같은 값을 나타내는 경우가 많이 이와 같은 형태의 그래프를 볼 수 있다.
+```
+
+```{r}
+cor.test(apt$평당가격,apt$`해당 지역 지하철 지점수`) # 평당가격과 해당 지역 지하철 지점수라는 두 변수 간 상관 관계의 유의도 출력
+#상관계수는 0.005769014이고 유의도는 0.1706으로 0.05보다 높게 나타난다.
+```
+- -> 평당가격과 해당 지역 지하철 지점수와 관계가 있을 것이라는 연구가설이 기각되고, 평당가격과 지하철 지점수 간에 관계가 없을 것이라는 영가설이 채택된다.
+
+```{r}
+cor.test(apt$평당가격,apt$`국립공원수`) # 평당가격과 국립공원수라는 두 변수 간 상관 관계의 유의도 출력
+# 상관계수는 -0.0003684291이고 유의도는 0.9303으로 0.05보다 높게 나타난다.
+
+```
+- -> 평당가격과 해당 지역 지하철 지점수와 관계가 있을 것이라는 연구가설이 기각되고, 평당가격과 지하철 지점수 간에 관계가 없을 것이라는 영가설이 채택된다.
+
+```{r}
+cor.test(apt$평당가격,apt$`범죄발생수`) # 평당가격과 범죄발생수라는 두 변수 간 상관 관계의 유의도 출력
+#상관계수는 -0.0170121이고 유의도는 5.319e-05으로 0.05보다 낮게 나타난다.
+
+```
+- ->  평당가격과 범죄발생수와 관계가 없을 것이라는 연구가설이 기각되고, 평당가격과 범죄발생수와 관계가 있을 것이라는 영가설을 채택된다.
+- 상관 분석을 한 결과 평당가격과 해당 지역 지하철 지점수, 국립공원의 수는 변수 사이에 선형 관계가 없음을 나타냅니다.
+
+
+```{r} 
+# 공분산 (cov) 을 이용해서도 두 변수 사이의 상관관계를 파악할 수 있다.
+attach(apt)
+cov(평당가격,`해당 지역 지하철 지점수`) # 양수니까 두 변수 간의 상관관계는 상승하는 경향이라고 이해할 수 있다. 다만 표준화가 안 되었기 때문에 수치만으로 얼마나 크게 변화하는지는 알 수 없다.
+
+cor(평당가격,`해당 지역 지하철 지점수`, use = 'complete.obs', method = 'pearson') # 하지만 상관계수는 -1에서 1 사이의 수를 가지는데 0이면 선형관계가 없는 것이다. 0.005769014으로 0과 매우 가까운 것으로 보면 선형관계가 보이지 않는 것을 확인할 수 있다.
+
+cov(평당가격,국립공원수) # 음수니까 두 변수 간의 상관관계는 하강하는 경향이라고 이해할 수 있다. 다만 표준화가 안 되었기 때문에 수치만으로 얼마나 크게 변화하는지는 알 수 없다.
+
+cor(평당가격,국립공원수, use = 'complete.obs', method = 'pearson') # 이 또한 선형관계가 없음을 확인할 수 있다.
+
+cov(평당가격,`범죄발생수`) # 음수니까 두 변수 간의 상관관계는 하강하는 경향이라고 이해할 수 있다. 다만 표준화가 안 되었기 때문에 수치만으로 얼마나 크게 변화하는지는 알 수 없다.
+
+cor(평당가격,`범죄발생수`, use = 'complete.obs', method = 'pearson') # 하지만 상관계수는 -1에서 1 사이의 수를 가지는데 0이면 선형관계가 없는 것이다. 0.005769014으로 0과 매우 가까운 것으로 보면 선형관계가 보이지 않는 것을 확인할 수 있다.
+
+detach(apt)
+```
+
+## 집 주변의 기관
+```{r}
+cor.var2 <- apt[c("평당가격", "보건기관수","교육기관수","유흥업소수")]
+round(cor(cor.var2, use = "pairwise.complete.obs"),4) # 소숫점 4자리수까지 조정을 하고 cor함수를 사용하였다
+
+# 상관계수를 파악하기 전, 산점도로 변수간의 관련성을 그림으로 시각화
+plot(cor.var2, cex = 1, pch = 1, col = "blue") #그래프로 분포 확인 #지역별로 같은 값을 나타내는 경우가 많이 이와 같은 형태의 그래프를 볼 수 있다.
+
+```
+
+## 유의도 
+```{r}
+cor.test(apt$평당가격,apt$`보건기관수`) # 평당가격과 해당 지역 지하철 지점수라는 두 변수 간 상관 관계의 유의도 출력
+#상관계수는 0.002005078 이고 유의도는 0.6339으로 0.05보다 높게 나타난다.
+```
+- -> 평당가격과 보건기관수와 관계가 있을 것이라는 연구가설이 기각되고, 평당가격과 보건기관수간에 관계가 없을 것이라는 영가설이 채택된다.
+
+```{r}
+cor.test(apt$평당가격,apt$`교육기관수`) # 평당가격과 국립공원수라는 두 변수 간 상관 관계의 유의도 출력
+# 상관계수는 -0.01190165 이고 유의도는 0.004698으로 0.05보다 낮게 나타난다.
+
+```
+- -> 평당가격과 교육기관수와 관계가 없을 것이라는 영가설이 기각되고, 평당가격과 교육기관수 간에 관계가 있을 것이라는 연구가설이 채택된다.
+
+```{r}
+cor.test(apt$평당가격,apt$`유흥업소수`) # 평당가격과 범죄발생수라는 두 변수 간 상관 관계의 유의도 출력
+#상관계수는 -0.001747368 이고 유의도는 0.6781으로 0.05보다 높게 나타난다.
+
+```
+- -> 평당가격과 유흥업소수와 관계가 있을 것이라는 연구가설이 기각되고, 평당가격과 유흥업소수 간에 관계가 없을 것이라는 연구가설이 채택된다.
+- 변수 사이에 선형 관계가 없음을 나타낸다.
+
+# 정규성 검정
+
+```{r}
+par(mfrow=c(1,2))
+hist(apt$평당가격, breaks = 10, col = 2)
+hist(apt$`건축 연도`, breaks = 10, col = 2)
+hist(apt$` 최근 매매 연도`, breaks = 10, col = 2)
+hist(apt$층수, breaks = 10, col = 2)
+hist(apt$범죄발생수, breaks = 10, col = 2)
+hist(apt$보건기관수, breaks = 10, col = 2)
+hist(apt$국립공원수, breaks = 10, col = 2)
+hist(apt$유흥업소수, breaks = 10, col = 2)
+hist(apt$`해당 지역 지하철 지점수`, breaks = 10, col = 2)
+hist(apt$교육기관수, breaks = 10, col = 2)
+
+## Perform Kolmogorov-Smirnov test
+ks.test(apt$평당가격, rnorm(100));ks.test(apt$`건축 연도`, rnorm(100))
+ks.test(apt$` 최근 매매 연도`, rnorm(100));ks.test(apt$층수, rnorm(100))
+ks.test(apt$범죄발생수, rnorm(100));ks.test(apt$보건기관수, rnorm(100))
+ks.test(apt$국립공원수, rnorm(100));ks.test(apt$유흥업소수, rnorm(100))
+ks.test(apt$교육기관수, rnorm(100));ks.test(apt$`해당 지역 지하철 지점수`, rnorm(100))
+
+
+apt_r <- transform(apt, `평당가격` = log(`평당가격` + 1))
+apt_r <- transform(apt_r, `해당.지역.지하철.지점수` = log(`해당.지역.지하철.지점수` + 1))
+apt_r <- transform(apt_r, `국립공원수` = log(`국립공원수` + 1))
+apt_r <- transform(apt_r, `유흥업소수` = log(`유흥업소수` + 1))
+apt_r <- transform(apt_r, `교육기관수` = log(`교육기관수` + 1))
+apt_r <- transform(apt_r, `보건기관수` = log(`보건기관수` + 1))
+apt_r <- transform(apt_r, `범죄발생수` = log(`범죄발생수` + 1))
+apt_r <- transform(apt_r, `매매가` = log(`매매가` + 1))
+apt_r <- transform(apt_r, `건축.연도` = log(`건축.연도` + 1))
+
+ks.test(apt_r$평당가격,rnorm(100))
+ks.test(apt_r$`건축.연도`, rnorm(100))
+ks.test(apt_r$`X.최근.매매.연도`, rnorm(100))
+ks.test(apt_r$층수, rnorm(100))
+ks.test(apt_r$범죄발생수, rnorm(100))
+ks.test(apt_r$보건기관수, rnorm(100))
+ks.test(apt_r$국립공원수, rnorm(100))
+ks.test(apt_r$유흥업소수, rnorm(100))
+ks.test(apt_r$교육기관수, rnorm(100))
+ks.test(apt_r$`해당.지역.지하철.지점수`, rnorm(100))
+
+
+hist(apt_r$평당가격, breaks = 500, freq = TRUE)
+
+## Plot using a qqplot
+qqnorm(apt_r$평당가격);qqline(apt_r$평당가격, col = 2)
+qqnorm(apt_r$`건축.연도`);qqline(apt_r$`건축.연도`, col = 2)
+qqnorm(apt_r$`X.최근.매매.연도`);qqline(apt_r$`X.최근.매매.연도`, col = 2)
+qqnorm(apt_r$범죄발생수);qqline(apt_r$범죄발생수, col = 2)
+qqnorm(apt_r$층수);qqline(apt$층수, col = 2)
+
+qqnorm(apt_r$보건기관수);qqline(apt_r$보건기관수, col = 2)
+qqnorm(apt_r$국립공원수);qqline(apt_r$국립공원수, col = 2)
+qqnorm(apt_r$교육기관수);qqline(apt_r$교육기관수, col = 2)
+qqnorm(apt_r$`해당.지역.지하철.지점수`);qqline(apt_r$`해당.지역.지하철.지점수`, col = 2)
+qqnorm(apt_r$유흥업소수);qqline(apt_r$유흥업소수, col = 2)
+
+install.packages("fBasics")
+library(fBasics)
+lillieTest(apt_r$평당가격)
+
+```
+
+#sjplot으로 상관분석
+
+```{r}
+library(sjPlot)
+cor.var3 <- apt[c("평당가격", "해당 지역 지하철 지점수","국립공원수","범죄발생수","보건기관수","교육기관수","유흥업소수")]
+tab_corr(cor.var3,var.labels = c("평당가격", "해당 지역 지하철 지점수","국립공원수","범죄발생수","보건기관수","교육기관수","유흥업소수"),corr.method = "pearson",na.deletion = "pairwise",p.numeric = T, triangle = "lower" , encoding = "EUC-KR")
+
+```
+
+
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(car)
+library(nortest)
+library(psych)
+```
+
