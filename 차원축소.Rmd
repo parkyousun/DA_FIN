@@ -5,8 +5,36 @@ date: '2021 6 20 '
 output: html_document
 ---
 ```{r}
-apt<- read.csv("apt_2021_window.csv")
+apt<- read.csv("apt_final_1.csv")
 
-$ git merge --abort
+apt$최근.매매.연도<- as.factor(as.character(apt$최근.매매.연도))
+apt$최근.매매.월<- as.factor(as.character(apt$최근.매매.월))
+apt$지역코드<- as.factor(as.character(apt$지역코드))
+apt$지역<- as.factor(as.character(apt$지역))
+
+name.gu<- names(table(apt$지역))
+name.gu[1]
+set.seed(2021)
+rd.apt<- sample(apt[apt$지역 == name.gu[1],], 5)
+
+table(apt$지역)
+
+apt<- apt[,-1]
+apt_pca<- apt[,c(2,8,11:18)]
+
+str(apt_pca)
+
+apt.centered<- scale(apt_pca, center = T, scale = F)
+
+var(apt.centered)
+diag(var(apt.centered))
+sum(diag(var(apt.centered)))
+
+pca.out<-prcomp(apt.centered)
+summary(pca.out)
+
+screeplot(pca.out, type = "l")
+
+
 ```
 
