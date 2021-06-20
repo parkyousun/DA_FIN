@@ -38,6 +38,6 @@ c<- c[,-2]
 c[,12]<-gsub(",", "", c[,12])
 c[,12]<-as.numeric(c[,12])
 
-write.csv("gu_data_2.csv")
+write.csv(c, "gu_data_2.csv")
 ```
 
