@@ -278,48 +278,61 @@ apart_price_3 %>% ggplot(aes(x =지역, y=평당가격, color = factor(건축.�
   theme(axis.text.x = element_text(angle = 45))
 ```
 ```{r}
-Keyword <- "아파트+정책"
-Date <- as.Date(as.character(20200501), format ="%Y%m%d")
-Date <- format(Date, "%Y.%m.%d")
-page <- 1
-
-url_1 <- "https://search.naver.com/search.naver?&where=news&query="
-url_2 <- "&pd=3&ds="
-url_3 <- "&de="
-url_4 <- "&start="
-
-start <- as.Date(as.character(20200501), format ="%Y%m%d")
-end <- as.Date(as.character(20210531), format ="%Y%m%d")
-
-Date <- start:end
-Date <- as.Date(Date, origin="1970-01-01")
-
+base <- "https://search.naver.com/search.naver?&where=news&query="
+query <- "아파트+정책"
+base_2 <- "&pd=3&ds="
+base_3 <- "&de="
+base_4 <- "&start="
 page <- seq(from=1, to=41, by=10)
-page <- seq(from=1, by=10, length.out = 5)
+urls <- NULL
+start <- as.Date(as.character(20200501), format="%Y%m%d")
+end <- as.Date(as.character(20210501), format="%Y%m%d")
+date <- start:end
+date <- as.Date(date, origin="1970-01-01")
 
-list <- c()
-for(date_i in Date){
+urls_list <- c()
+for (date_i in date){
   for(page_i in page){
-    dt <- format(as.Date(date_i, origin="1970-01-01"), "%Y.%m.%d")
-    naver <- paste0(url_1, Keyword, url_2, Date, url_3, Date, url_4, page)
-    list <- c(list, naver)
+    dt <- format(as.Date(date_i, origin = "1970-01-01"), "%Y.%m.%d")
+    urls <- paste0(base,query,base_2,date,base_3,date,base_4,page)
+    urls_list <- c(urls_list, urls)
   }
 }
 
-head(list, 5)
+html <- read_html(urls[1])
+html
+
+news <- NULL
+for(url in urls){
+  html <- read_html(url)
+  news <- c(news, html %>%
+              html_nodes('ul.type01 > li > dl > dd > a') %>%
+              html_attr('href')
+            )
+}
+#sp_nws1 > div > div > div.news_info > div.info_group > a:nth-child(3)
+news
+
+contents <- NULL
+title <- NULL
+
+for(link in news){
+  html <- read_html(link)
+}
+
+contents <- c(contents, html %>%
+                html_nodes('#articleBodyContents')%>%
+                html_text())
+
+title <- c(title, html %>%
+             html_nodes('title') %>%
+             html_text())
+title
 
 
-url <- "https://search.naver.com/search.naver?&where=news&query=아파트+정책&pd=3&ds=2020-05-01&de=2020-05-01&start=1"
-
-html <- read_html(url[1])
-temp <- unique(html_nodes(html, '#sp_nws1')%>%
-                 html_nodes(css='news_wrap api_ani_send')%>%
-                 html_nodes(css='news_area')%>%
-                 html_nodes(css='news_info')%>%
-                 html_nodes(css="api_save_group _keep_wrap")%>%
-                 html_nodes(css="info_group")%>%
-                 html_nodes(css="info press")%>%
-                 html_nodes('a')%>%
-                 html_attr('href'))
-head(temp,5)
+contents_df <- as.data.frame(contents)
+contents_df
+title_df <- as.data.frame(title)
+title_df
+news_final <- cbind(title_df, contents_df)
 ```
