@@ -1,0 +1,10 @@
+```{r}
+public_health<- read.csv("서울시 동별 보건소 및 보건분소.csv")
+household<- read.csv("서울시 동별 세대원수별 세대수.csv")
+real_estate<- read.csv("서울시 동별 아파트 매매거래 현황.csv")
+foreign_stud<- read.csv("서울시 외국인 유학생 현황.csv")
+
+head(real_estate)
+table
+```
+
