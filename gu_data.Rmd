@@ -8,3 +8,14 @@ head(real_estate)
 table
 ```
 
+```{r}
+apt<- read.csv("apt_final_1.csv")
+
+apt_1<- aggregate(평당가격~지역+ 범죄발생수+보건기관수+교육기관수+유흥업소수+국립공원수+해당.지역.지하철.지점수, apt, mean)
+
+str(apt_1)
+apt_1
+
+write.csv(apt_1, "gu_data.csv")
+```
+
