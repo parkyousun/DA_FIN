@@ -7,7 +7,6 @@ output: html_document
 ```{r}
 apt<- read.csv("apt_2021_window.csv")
 
-apt_var<- apt[,]
-diag(var(apt))
+$ git merge --abort
 ```
 
