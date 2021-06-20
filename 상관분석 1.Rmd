@@ -42,7 +42,7 @@ cor.test(apt$평당가격,apt$`범죄발생수`) # 평당가격과 범죄발생�
 
 ```
 - ->  평당가격과 범죄발생수와 관계가 없을 것이라는 연구가설이 기각되고, 평당가격과 범죄발생수와 관계가 있을 것이라는 영가설을 채택된다.
-- 상관 분석을 한 결과 평당가격과 해당 지역 지하철 지점수, 국립공원의 수는 상관 관계가 없다는 것을 알 수 있고, 범죄발생수는 관계가 있다는 것을 알 수 있다.
+- 상관 분석을 한 결과 평당가격과 해당 지역 지하철 지점수, 국립공원의 수는 변수 사이에 선형 관계가 없음을 나타냅니다.
 
 
 ```{r} 
@@ -93,6 +93,7 @@ cor.test(apt$평당가격,apt$`유흥업소수`) # 평당가격과 범죄발생�
 
 ```
 - -> 평당가격과 유흥업소수와 관계가 있을 것이라는 연구가설이 기각되고, 평당가격과 유흥업소수 간에 관계가 없을 것이라는 연구가설이 채택된다.
+- 변수 사이에 선형 관계가 없음을 나타낸다.
 
 # 정규성 검정
 
@@ -109,7 +110,6 @@ hist(apt$유흥업소수, breaks = 10, col = 2)
 hist(apt$`해당 지역 지하철 지점수`, breaks = 10, col = 2)
 hist(apt$교육기관수, breaks = 10, col = 2)
 
-
 ## Perform Kolmogorov-Smirnov test
 ks.test(apt$평당가격, rnorm(100));ks.test(apt$`건축 연도`, rnorm(100))
 ks.test(apt$` 최근 매매 연도`, rnorm(100));ks.test(apt$층수, rnorm(100))
@@ -118,28 +118,66 @@ ks.test(apt$국립공원수, rnorm(100));ks.test(apt$유흥업소수, rnorm(100)
 ks.test(apt$교육기관수, rnorm(100));ks.test(apt$`해당 지역 지하철 지점수`, rnorm(100))
 
 
+apt_r <- transform(apt, `평당가격` = log(`평당가격` + 1))
+apt_r <- transform(apt_r, `해당.지역.지하철.지점수` = log(`해당.지역.지하철.지점수` + 1))
+apt_r <- transform(apt_r, `국립공원수` = log(`국립공원수` + 1))
+apt_r <- transform(apt_r, `유흥업소수` = log(`유흥업소수` + 1))
+apt_r <- transform(apt_r, `교육기관수` = log(`교육기관수` + 1))
+apt_r <- transform(apt_r, `보건기관수` = log(`보건기관수` + 1))
+apt_r <- transform(apt_r, `범죄발생수` = log(`범죄발생수` + 1))
+apt_r <- transform(apt_r, `매매가` = log(`매매가` + 1))
+apt_r <- transform(apt_r, `건축.연도` = log(`건축.연도` + 1))
+
+ks.test(apt_r$평당가격,rnorm(100))
+ks.test(apt_r$`건축.연도`, rnorm(100))
+ks.test(apt_r$`X.최근.매매.연도`, rnorm(100))
+ks.test(apt_r$층수, rnorm(100))
+ks.test(apt_r$범죄발생수, rnorm(100))
+ks.test(apt_r$보건기관수, rnorm(100))
+ks.test(apt_r$국립공원수, rnorm(100))
+ks.test(apt_r$유흥업소수, rnorm(100))
+ks.test(apt_r$교육기관수, rnorm(100))
+ks.test(apt_r$`해당.지역.지하철.지점수`, rnorm(100))
+
+
+hist(apt_r$평당가격, breaks = 500, freq = TRUE)
+
 ## Plot using a qqplot
-qqnorm(apt$평당가격);qqline(apt$평당가격, col = 2)
-qqnorm(apt$`건축 연도`);qqline(apt$`건축 연도`, col = 2)
-qqnorm(apt$` 최근 매매 연도`);qqline(apt$` 최근 매매 연도`, col = 2)
-qqnorm(apt$범죄발생수);qqline(apt$범죄발생수, col = 2)
-qqnorm(apt$층수);qqline(apt$층수, col = 2)
-qqnorm(apt$보건기관수);qqline(apt$보건기관수, col = 2)
-qqnorm(apt$국립공원수);qqline(apt$국립공원수, col = 2)
-qqnorm(apt$교육기관수);qqline(apt$교육기관수, col = 2)
-qqnorm(apt$`해당 지역 지하철 지점수`);qqline(apt$`해당 지역 지하철 지점수`, col = 2)
-qqnorm(apt$유흥업소수);qqline(apt$유흥업소수, col = 2)
+qqnorm(apt_r$평당가격);qqline(apt_r$평당가격, col = 2)
+qqnorm(apt_r$`건축.연도`);qqline(apt_r$`건축.연도`, col = 2)
+qqnorm(apt_r$`X.최근.매매.연도`);qqline(apt_r$`X.최근.매매.연도`, col = 2)
+qqnorm(apt_r$범죄발생수);qqline(apt_r$범죄발생수, col = 2)
+qqnorm(apt_r$층수);qqline(apt$층수, col = 2)
+
+qqnorm(apt_r$보건기관수);qqline(apt_r$보건기관수, col = 2)
+qqnorm(apt_r$국립공원수);qqline(apt_r$국립공원수, col = 2)
+qqnorm(apt_r$교육기관수);qqline(apt_r$교육기관수, col = 2)
+qqnorm(apt_r$`해당.지역.지하철.지점수`);qqline(apt_r$`해당.지역.지하철.지점수`, col = 2)
+qqnorm(apt_r$유흥업소수);qqline(apt_r$유흥업소수, col = 2)
+
+
+install.packages("fBasics")
+library(fBasics)
+lillieTest(apt_r$평당가격)
 
 ```
+
+#sjplot으로 상관분석
 
 ```{r}
-#install.packages("knitr")
-library(knitr)
-price.raw.cor<-apt[ , -which(names(apt) %in% c("아파트 이름","지역코드","지역","평","X","최근 매매 월","지번"))] 
+library(sjPlot)
+cor.var3 <- apt[c("평당가격", "해당 지역 지하철 지점수","국립공원수","범죄발생수","보건기관수","교육기관수","유흥업소수")]
+tab_corr(cor.var3,var.labels = c("평당가격", "해당 지역 지하철 지점수","국립공원수","범죄발생수","보건기관수","교육기관수","유흥업소수"),corr.method = "pearson",na.deletion = "pairwise",p.numeric = T, triangle = "lower" , encoding = "EUC-KR")
 
-kable(cor(price.raw.cor))
 ```
 
 
 
+```{r}
+library(dplyr)
+library(ggplot2)
+library(car)
+library(nortest)
+library(psych)
+```
 
