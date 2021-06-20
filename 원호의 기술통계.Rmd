@@ -1,20 +1,27 @@
 ---
-title: "분석_원호"
+title: "기술통계"
 author: "성원호"
 date: "6/19/2021"
 output: html_document
 ---
-
+# 필요한 데이터 및 라이브러리 할당
 ```{r setup, include=FALSE}
 library(ggplot2)
 library(dplyr)
 library(psych)
+library(sjmisc)
 apt_dt <- read.csv("apt_final.csv")
 head(apt_dt)
+str(apt_dt)
 ```
 
+# 기술 통계(통계량)
 ```{r}
 # 지역에 따른 아파트 기술 통계
+# aggregate(y ~ x, data, function)을 통해 손쉽게 기술통계를 할 수 있다.
+# 매매가 / 평당가로 나누어 분석
+
+# 평균
 apt_mean_1 <- aggregate(매매가~ 지역, apt_dt, mean)
 apt_mean_2 <- aggregate(평당가격 ~ 지역, apt_dt, mean)
 apt_mean <- inner_join(apt_mean_1, apt_mean_2,
@@ -22,6 +29,8 @@ apt_mean <- inner_join(apt_mean_1, apt_mean_2,
 colnames(apt_mean)[2] <- "매매가 평균" ; colnames(apt_mean)[3] <- "평당가 평균"
 head(apt_mean)
 
+
+# 중앙값
 apt_median_1 <- aggregate(매매가~지역, apt_dt, median)
 apt_median_2 <- aggregate(평당가격~지역, apt_dt, median)
 apt_median <- inner_join(apt_median_1, apt_median_2,
@@ -29,6 +38,7 @@ apt_median <- inner_join(apt_median_1, apt_median_2,
 colnames(apt_median)[2] <- "매매가 중앙값" ; colnames(apt_median)[3] <- "평당가 중앙값"
 head(apt_median)
 
+# 최소값
 apt_min_1 <- aggregate(매매가~ 지역, apt_dt, min)
 apt_min_2 <- aggregate(평당가격 ~ 지역, apt_dt, min)
 apt_min <- inner_join(apt_min_1, apt_min_2,
@@ -36,6 +46,7 @@ apt_min <- inner_join(apt_min_1, apt_min_2,
 colnames(apt_min)[2] <- "매매가 최소" ; colnames(apt_min)[3] <- "평당가 최소"
 head(apt_min)
 
+# 최대값
 apt_max_1 <- aggregate(매매가~ 지역, apt_dt, max)
 apt_max_2 <- aggregate(평당가격 ~ 지역, apt_dt, max)
 apt_max <- inner_join(apt_max_1, apt_max_2,
@@ -43,6 +54,7 @@ apt_max <- inner_join(apt_max_1, apt_max_2,
 colnames(apt_max)[2] <- "매매가 최대" ; colnames(apt_max)[3] <- "평당가 최대"
 head(apt_max)
 
+# 분산
 apt_var_1 <- aggregate(매매가~ 지역, apt_dt, var)
 apt_var_2 <- aggregate(평당가격 ~ 지역, apt_dt, var)
 apt_var <- inner_join(apt_var_1, apt_var_2,
@@ -50,6 +62,7 @@ apt_var <- inner_join(apt_var_1, apt_var_2,
 colnames(apt_var)[2] <- "매매가 분산" ; colnames(apt_max)[3] <- "평당가 분산"
 head(apt_var)
 
+# 표준편차
 apt_sd_1 <- aggregate(매매가~ 지역, apt_dt, sd)
 apt_sd_2 <- aggregate(평당가격 ~ 지역, apt_dt, sd)
 apt_sd <- inner_join(apt_sd_1, apt_sd_2,
@@ -57,18 +70,116 @@ apt_sd <- inner_join(apt_sd_1, apt_sd_2,
 colnames(apt_sd)[2] <- "매매가 표준편차" ; colnames(apt_sd)[3] <- "평당가 표준편차"
 head(apt_sd)
 
+# 데이터별로 병합
 summary_apt <- cbind(apt_mean, apt_median, apt_min, apt_max, apt_var, apt_sd)
+# 중복되는 지역 컬럼 제거
 summary_apt <- summary_apt[-c(4,7,10,13,16,19)]
+# 결과 확인
 summary_apt
 
+# by 함수를 사용해도 요약값을 구할 수 있다. 추출되는 값들은 최소, 중앙값, 평균, 최대, 1/3분위수
+# by(x, y, function)
 by(apt_dt$평당가격, apt_dt$지역, summary)
 
+# psych package의 describeBy를 통해 각 구별 요약값 구할 수 있음
+# 추출값은 분산 , 평균, 중앙, 최소 등 by보다 다양한 값들을 추출해준다.
 psych::describeBy(apt_dt$평당가격, apt_dt$지역)
+```
 
-apt_dt %>% ggplot() +
-  theme_set(theme_gray(base_family = 'AppleMyungjo'))+
-  geom_bar(mapping = aes(x = 지역, y = 평당가격),
-           stat = "identity", width = 0.3, fill = 'darkblue')
-  
+# 기술 통계(시각화)
+```{r}
+# 구별 아파트의 평균 평당 매매가 시각화
+apart_price_2 <- aggregate(평당가격~지역+최근.매매.연도, apt_dt, mean)
 
+apart_price_2 %>% ggplot(aes(x = 최근.매매.연도 , y = 평당가격, fill = 지역)) + #연도와 평당가격을 각각 x축, y축으로 놓고 지역별로 아파트 가격을 대표할 수 있는 값을 시각화한다.
+  theme_set(theme_light(base_family = "AppleMyungjo"))+
+  geom_bar(stat = "identity", position = "dodge") +
+  xlab(label = "거래일") +
+  ylab(label = "평당 가격") +
+  ggtitle(label = "지역에 따른 아파트 평당가")+
+  theme(text=element_text(color="black"))+
+  theme(axis.title=element_text(size=12))+
+  theme(plot.title=element_text(hjust=0.5, size=15, color="black"))
+apt_dt
+
+# 구별 아파트의 평균 평당 매매가 
+apart_price <- aggregate(평당가격~지역+최근.매매.월, apt_dt, mean)
+myfunc_1 <- function(location){
+  seoul <- subset(apart_price, 지역==location)
+  return(seoul)
+}
+
+apart_1 <- myfunc_1('강남구')
+apart_2 <- myfunc_1('강동구') ; apart_3 <- myfunc_1('강북구')
+apart_4 <- myfunc_1('강서구'); apart_5 <- myfunc_1('관악구')
+apart_6 <- myfunc_1('광진구'); apart_7 <- myfunc_1('구로구')
+apart_8 <- myfunc_1('금천구'); apart_9 <- myfunc_1('노원구')
+apart_10 <- myfunc_1('도봉구'); apart_11 <- myfunc_1('동대문구')
+apart_12 <- myfunc_1('동작구'); apart_13 <- myfunc_1('마포구')
+apart_14 <- myfunc_1('서대문구'); apart_15 <- myfunc_1('서초구')
+apart_16 <- myfunc_1('성동구'); apart_17 <- myfunc_1('성북구')
+apart_18 <- myfunc_1('송파구'); apart_19 <- myfunc_1('양천구')
+apart_20 <- myfunc_1('은평구'); apart_21 <- myfunc_1('종로구')
+apart_22 <- myfunc_1('중구'); apart_23 <- myfunc_1('중랑구')
+apart_24 <- myfunc_1('용산구')
+
+myfunc_2 <- function(percent){
+  cal <- percent %>% mutate(standard = ifelse(grepl("\\d",최근.매매.월), "First", 최근.매매.월)) %>%
+  group_by(standard) %>%
+  mutate(평당가격 = 평당가격,
+           next.month1 = lead(평당가격, order_by = standard),
+           증감율 = 100*(평당가격-next.month1)/next.month1) %>%
+  ungroup()%>%
+  select(지역, 최근.매매.월,평당가격, 증감율)
+  return(cal)
+}
+
+a <- myfunc_2(apart_1) ; b <- myfunc_2(apart_2)
+c <- myfunc_2(apart_3) ; d <- myfunc_2(apart_4)
+e <- myfunc_2(apart_5) ; f <- myfunc_2(apart_6)
+g <- myfunc_2(apart_7) ; h <- myfunc_2(apart_8)
+i <- myfunc_2(apart_9) ; j <- myfunc_2(apart_10)
+k <- myfunc_2(apart_11) ; l <- myfunc_2(apart_12)
+m <- myfunc_2(apart_13) ; n <- myfunc_2(apart_14)
+o <- myfunc_2(apart_15) ; p <- myfunc_2(apart_16)
+q <- myfunc_2(apart_17) ; r <- myfunc_2(apart_18)
+s <- myfunc_2(apart_19) ; t <- myfunc_2(apart_20)
+u <- myfunc_2(apart_21) ; v <- myfunc_2(apart_22)
+w <- myfunc_2(apart_23) ; x <- myfunc_2(apart_24)
+
+percent_data <- plyr::join_all(list(a,b,c,d,e,f,g,h,i,j,k,l), by="지역", type="full")
+percent_data_2 <- plyr::join_all(list(m,n,o,p,q,r,s,t,u,v,w,x), by="지역", type="full")
+
+
+ggplot(percent_data, aes(x=최근.매매.월, y=증감율, color=지역))+
+  theme_set(theme_light(base_family = "AppleMyungjo"))+
+  geom_point() + geom_line() +
+  xlab(label = "월") +
+  ylab(label = "증감율") +
+  ggtitle(label = "가격 증감율") +
+  theme(text=element_text(color="black"))+
+  theme(axis.title=element_text(size=12))+
+  theme(plot.title=element_text(hjust=0.5, size=15, color="black"))
+
+ggplot(percent_data_2, aes(x=최근.매매.월, y=증감율, color=지역))+
+  theme_set(theme_light(base_family = "AppleMyungjo"))+
+  geom_point() + geom_line() +
+  scale_x_continuous(breaks=c(2,4,6,8,10,12)) +
+  xlab(label = "월") +
+  ylab(label = "증감율") +
+  ggtitle(label = "가격 증감율") +
+  theme(text=element_text(color="black"))+
+  theme(axis.title=element_text(size=12))+
+  theme(plot.title=element_text(hjust=0.5, size=15, color="black"))
+
+apart_price_3 %>% ggplot(aes(x =지역, y=평당가격, color = factor(건축.연도)))+
+  theme_set(theme_light(base_family = "AppleMyungjo")) +
+  geom_point() +
+  xlab(label = "지역") +
+  ylab(label = "평당가") +
+  ggtitle(label = "연도 및 구별 평당가") +
+  theme(text = element_text(color="black")) +
+  theme(axis.title = element_text(size = 10)) +
+  theme(plot.title=element_text(hjust = 0.5, size = 15, color = "black"))+
+  theme(axis.text.x = element_text(angle = 45))
 ```

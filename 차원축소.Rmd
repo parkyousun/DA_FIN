@@ -12,30 +12,29 @@ apt$최근.매매.월<- as.factor(as.character(apt$최근.매매.월))
 apt$지역코드<- as.factor(as.character(apt$지역코드))
 apt$지역<- as.factor(as.character(apt$지역))
 
+name.gu<- names(table(apt$지역))
+name.gu[1]
+set.seed(2021)
+rd.apt<- sample(apt[apt$지역 == name.gu[1],], 5)
+
+table(apt$지역)
+
 apt<- apt[,-1]
 apt_pca<- apt[,c(2,8,11:18)]
 
-
 str(apt_pca)
 
-var(apt_pca)
-diag(var(apt_pca))
-sum(diag(var(apt_pca)))
-
-pca.out<- prcomp(apt_pca, scale. = T)
-pca.out
-
-summary(pca.out)
-```
-
-```{r}
 apt.centered<- scale(apt_pca, center = T, scale = F)
 
 var(apt.centered)
 diag(var(apt.centered))
 sum(diag(var(apt.centered)))
 
-apt.eigen<- eigen(cor(apt.centered))
-summary(apt.eigen)
+pca.out<-prcomp(apt.centered)
+summary(pca.out)
+
+screeplot(pca.out, type = "l")
+
+
 ```
 
