@@ -34,7 +34,10 @@ pca.out<-prcomp(apt.centered)
 summary(pca.out)
 
 screeplot(pca.out, type = "l")
-
-
 ```
+
+```{r}
+prc <- as.matrix(apt.centered) %*% pca.out$rotation
+```
+
 
