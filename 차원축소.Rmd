@@ -37,7 +37,9 @@ screeplot(pca.out, type = "l")
 ```
 
 ```{r}
-prc <- as.matrix(apt.centered) %*% pca.out$rotation
+prc <- as.matrix(apt.centered) %*% pca.out$rotation[,1:2]
+model8 <-lm(y_data~pc_scores)
+summary(model8)
 ```
 
 
