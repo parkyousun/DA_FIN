@@ -15,20 +15,16 @@ apt_pca<- apt_pca[,-7]
 
 price<- apt$평당가격
 
-apt.centered<- scale(apt_pca, center = T, scale = F)
+apt.scaled<- scale(apt_pca)
 
-var(apt.centered)
-diag(var(apt.centered))
-sum(diag(var(apt.centered)))
+pca.out<-prcomp(apt_pca)
 
-pca.out<-prcomp(apt.centered)
-summary(pca.out)
-
+biplot(pca.out)
 screeplot(pca.out, type = "l")
 ```
 
 ```{r}
-prc <- as.matrix(apt_pca) %*% pca.out$rotation
+prc <- as.matrix(apt.scaled) %*% pca.out$rotation
 train1<- cbind(price, as.data.frame(prc))
 str(train1)
 prc.model <- lm(price~PC1, data = train1) # 회귀분석
