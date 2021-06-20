@@ -10,6 +10,11 @@ library(ggplot2)
 library(dplyr)
 library(psych)
 library(sjmisc)
+library(gridExtra)
+library(KoNLP)
+library(rJava)
+library(multilinguer)
+library(rvest)
 apt_dt <- read.csv("apt_final.csv")
 head(apt_dt)
 str(apt_dt)
@@ -87,6 +92,7 @@ psych::describeBy(apt_dt$평당가격, apt_dt$지역)
 ```
 
 # 기술 통계(시각화)
+## 구별 아파트의 평균 평당 매매가 
 ```{r}
 # 구별 아파트의 평균 평당 매매가 시각화
 apart_price_2 <- aggregate(평당가격~지역+최근.매매.연도, apt_dt, mean)
@@ -100,15 +106,26 @@ apart_price_2 %>% ggplot(aes(x = 최근.매매.연도 , y = 평당가격, fill =
   theme(text=element_text(color="black"))+
   theme(axis.title=element_text(size=12))+
   theme(plot.title=element_text(hjust=0.5, size=15, color="black"))
-apt_dt
 
-# 구별 아파트의 평균 평당 매매가 
-apart_price <- aggregate(평당가격~지역+최근.매매.월, apt_dt, mean)
+apart_price
+apart_price_2
+apart_price_3
+
+write.csv(apart_price, "apart_price_1.csv")
+write.csv(apart_price_2, "apart_price_2.csv")
+write.csv(apart_price_3, "apart_price_3.csv")
+```
+* 지역에 따른 아파트 평당가는 평균값을 대표값으로 하여 시각화를 한 결과 2020년까지는 구별 평균이 일정하다. 그러나 2021년을 기준으로 평균값들의 차이가 구마다 많이 나는 점을 확인할 수 있다. 특히 강남, 강동, 강서, 서초, 송파구를 중심으로 평균 가격이 타지역에 비해 낮다는 점을 확인할 수 있었다. 해당 자료만으로는 아파트 가격의 변동을 알 수 없었기 때문에 아파트 매매가의 월별 증감률을 확인해보기로 했다.
+
+```{r}
+# 각 구별 아파트 평균값을 구하기 위한 함수 생성
+apart_price <- aggregate(평당가격~지역+최근.매매.월+최근.매매.연도, apt_dt, mean)
 myfunc_1 <- function(location){
   seoul <- subset(apart_price, 지역==location)
   return(seoul)
 }
 
+# 함수를 이용해 구별 평균값 구하기
 apart_1 <- myfunc_1('강남구')
 apart_2 <- myfunc_1('강동구') ; apart_3 <- myfunc_1('강북구')
 apart_4 <- myfunc_1('강서구'); apart_5 <- myfunc_1('관악구')
@@ -123,6 +140,7 @@ apart_20 <- myfunc_1('은평구'); apart_21 <- myfunc_1('종로구')
 apart_22 <- myfunc_1('중구'); apart_23 <- myfunc_1('중랑구')
 apart_24 <- myfunc_1('용산구')
 
+# 각 구별 아파트의 평당 가격 증감율을 보기 위한 함수 생성
 myfunc_2 <- function(percent){
   cal <- percent %>% mutate(standard = ifelse(grepl("\\d",최근.매매.월), "First", 최근.매매.월)) %>%
   group_by(standard) %>%
@@ -130,10 +148,11 @@ myfunc_2 <- function(percent){
            next.month1 = lead(평당가격, order_by = standard),
            증감율 = 100*(평당가격-next.month1)/next.month1) %>%
   ungroup()%>%
-  select(지역, 최근.매매.월,평당가격, 증감율)
+  select(지역, 최근.매매.월,평당가격, 증감율, 최근.매매.연도)
   return(cal)
 }
 
+# 함수를 이용해 구별 증감율 컬럼이 추가된 데이터프레임 만들기
 a <- myfunc_2(apart_1) ; b <- myfunc_2(apart_2)
 c <- myfunc_2(apart_3) ; d <- myfunc_2(apart_4)
 e <- myfunc_2(apart_5) ; f <- myfunc_2(apart_6)
@@ -147,31 +166,106 @@ s <- myfunc_2(apart_19) ; t <- myfunc_2(apart_20)
 u <- myfunc_2(apart_21) ; v <- myfunc_2(apart_22)
 w <- myfunc_2(apart_23) ; x <- myfunc_2(apart_24)
 
+# 절반으로 나누어 시각화하기 위해 변수 두개에 할당
 percent_data <- plyr::join_all(list(a,b,c,d,e,f,g,h,i,j,k,l), by="지역", type="full")
 percent_data_2 <- plyr::join_all(list(m,n,o,p,q,r,s,t,u,v,w,x), by="지역", type="full")
 
+percent_data_a_2020 <- subset(percent_data, 최근.매매.연도 == 2020)
+percent_data_b_2020 <- subset(percent_data_2, 최근.매매.연도 == 2020)
 
-ggplot(percent_data, aes(x=최근.매매.월, y=증감율, color=지역))+
-  theme_set(theme_light(base_family = "AppleMyungjo"))+
-  geom_point() + geom_line() +
-  xlab(label = "월") +
-  ylab(label = "증감율") +
-  ggtitle(label = "가격 증감율") +
-  theme(text=element_text(color="black"))+
-  theme(axis.title=element_text(size=12))+
-  theme(plot.title=element_text(hjust=0.5, size=15, color="black"))
+percent_data_a_2021 <- subset(percent_data, 최근.매매.연도 == 2021)
+percent_data_b_2021 <- subset(percent_data_2, 최근.매매.연도 == 2021)
+```
 
-ggplot(percent_data_2, aes(x=최근.매매.월, y=증감율, color=지역))+
+# 월별 가격 증감 시각화
+```{r}
+a_2020 <- ggplot(percent_data_a_2020, aes(x=최근.매매.월, y=증감율, color=지역))+
   theme_set(theme_light(base_family = "AppleMyungjo"))+
   geom_point() + geom_line() +
   scale_x_continuous(breaks=c(2,4,6,8,10,12)) +
   xlab(label = "월") +
   ylab(label = "증감율") +
-  ggtitle(label = "가격 증감율") +
+  ggtitle(label = "가격 증감율 2020") +
   theme(text=element_text(color="black"))+
   theme(axis.title=element_text(size=12))+
   theme(plot.title=element_text(hjust=0.5, size=15, color="black"))
 
+a_2021 <- ggplot(percent_data_a_2021, aes(x=최근.매매.월, y=증감율, color=지역))+
+  theme_set(theme_light(base_family = "AppleMyungjo"))+
+  geom_point() + geom_line() +
+  scale_x_continuous(breaks=c(2,4,6,8,10,12)) +
+  xlab(label = "월") +
+  ylab(label = "증감율") +
+  ggtitle(label = "가격 증감율 2021") +
+  theme(text=element_text(color="black"))+
+  theme(axis.title=element_text(size=12))+
+  theme(plot.title=element_text(hjust=0.5, size=15, color="black"))
+
+result_a <- grid.arrange(a_2020, a_2021, ncol=2) ; result_a
+
+b_2020 <- ggplot(percent_data_b_2020, aes(x=최근.매매.월, y=증감율, color=지역))+
+  theme_set(theme_light(base_family = "AppleMyungjo"))+
+  geom_point() + geom_line() +
+  scale_x_continuous(breaks=c(2,4,6,8,10,12)) +
+  xlab(label = "월") +
+  ylab(label = "증감율") +
+  ggtitle(label = "가격 증감율 2020") +
+  theme(text=element_text(color="black"))+
+  theme(axis.title=element_text(size=12))+
+  theme(plot.title=element_text(hjust=0.5, size=15, color="black"))
+
+b_2021 <- ggplot(percent_data_b_2021, aes(x=최근.매매.월, y=증감율, color=지역))+
+  theme_set(theme_light(base_family = "AppleMyungjo"))+
+  geom_point() + geom_line() +
+  scale_x_continuous(breaks=c(2,4,6,8,10,12)) +
+  xlab(label = "월") +
+  ylab(label = "증감율") +
+  ggtitle(label = "가격 증감율 2021") +
+  theme(text=element_text(color="black"))+
+  theme(axis.title=element_text(size=12))+
+  theme(plot.title=element_text(hjust=0.5, size=15, color="black"))
+
+result_b <- grid.arrange(b_2020, b_2021, ncol = 2) ; result_b
+```
+* 강남~동작까지 2020년도 자료를 살펴보면 2020년도 5월부터 관악구를 제외한 대부분의 구가 같은 증가 양상을 보이고 있음을 알 수 있다. 또한 7월~8월 사이에 집값 양극화 현상이 생기기 시작하는 것을 볼 수 있다. 5~6월에 급격하게 증가했던 집값들의 대부분이 다시 하락하고 관악, 동대문, 강동 등의 지역들은 꾸준히 증가한다. 8월부터 구마다 변동률이 상이하고 관악구와 동작구, 강동구의 상승률이 두드러지게 보이는 것을 알 수 있었다. 10월에 꾸준히 올랐던 관악구의 집값이 전저점보다 하락하는 모습을 보였고, 12월에는 강남의 집값이 급상승하는 모습을 보였다. 2021년 자료를 보면 동작구의 증감률이 두드러지고 3-4월 사이에 대체적으로 안정, 상승세를 보였다.
+* 마포~중랑까지의 2020년도 자료 역시 마찬가지로 강남~동작과 비슷한 형태를 보인다. 특히 서초구와 송파구의 변동성이 12월까지 꾸준히 변하는 모습을 보였다. 2021년도 마찬가지로 서초, 송파, 양천 등 급격한 변동을 보였던 구들의 변동성이 매우 큰 것으로 나타났다.
+* 구별 평균 아파트 매매가는 생각보다 변동성이 두드러졌고, 특히 극단적인 변화 양상을 보였던 관악, 동작, 강동, 강남, 서초, 송파, 양천은 증감률이 +- 20%를 넘어갔다. 때문에 해당 지역을 중심으로 극단적인 가격 변화를 일으킨 요인에 대해 알아보고자 텍스트 마이닝을 실시해보기로 했다.
+
+```{r}
+new_percent <- plyr::join_all(list(a, b, e, l, o, r, s), by="지역", type="full")
+new_percent_2020 <- subset(new_percent, 최근.매매.연도 == 2020)
+new_percent_2021 <- subset(new_percent, 최근.매매.연도 == 2021)
+
+main_2020 <- ggplot(new_percent_2020, aes(x=최근.매매.월, y=증감율, color=지역))+
+  theme_set(theme_light(base_family = "AppleMyungjo"))+
+  geom_point() + geom_line() +
+  scale_x_continuous(breaks=c(2,4,6,8,10,12)) +
+  xlab(label = "월") +
+  ylab(label = "증감율") +
+  ggtitle(label = "가격 증감율 2020") +
+  theme(text=element_text(color="black"))+
+  theme(axis.title=element_text(size=12))+
+  theme(plot.title=element_text(hjust=0.5, size=15, color="black"))
+
+main_2021 <- ggplot(new_percent_2021, aes(x=최근.매매.월, y=증감율, color=지역))+
+  theme_set(theme_light(base_family = "AppleMyungjo"))+
+  geom_point() + geom_line() +
+  scale_x_continuous(breaks=c(2,4,6,8,10,12)) +
+  xlab(label = "월") +
+  ylab(label = "증감율") +
+  ggtitle(label = "가격 증감율 2021") +
+  theme(text=element_text(color="black"))+
+  theme(axis.title=element_text(size=12))+
+  theme(plot.title=element_text(hjust=0.5, size=15, color="black"))
+
+result_main <- grid.arrange(main_2020, main_2021, ncol = 2) ; result_main
+
+
+```
+
+# 건축 연도에 따른 시각화
+```{r}
+apart_price_3 <- aggregate(평당가격~지역+건축.연도, apt_dt, mean)
 apart_price_3 %>% ggplot(aes(x =지역, y=평당가격, color = factor(건축.연도)))+
   theme_set(theme_light(base_family = "AppleMyungjo")) +
   geom_point() +
@@ -182,4 +276,50 @@ apart_price_3 %>% ggplot(aes(x =지역, y=평당가격, color = factor(건축.�
   theme(axis.title = element_text(size = 10)) +
   theme(plot.title=element_text(hjust = 0.5, size = 15, color = "black"))+
   theme(axis.text.x = element_text(angle = 45))
+```
+```{r}
+Keyword <- "아파트+정책"
+Date <- as.Date(as.character(20200501), format ="%Y%m%d")
+Date <- format(Date, "%Y.%m.%d")
+page <- 1
+
+url_1 <- "https://search.naver.com/search.naver?&where=news&query="
+url_2 <- "&pd=3&ds="
+url_3 <- "&de="
+url_4 <- "&start="
+
+start <- as.Date(as.character(20200501), format ="%Y%m%d")
+end <- as.Date(as.character(20210531), format ="%Y%m%d")
+
+Date <- start:end
+Date <- as.Date(Date, origin="1970-01-01")
+
+page <- seq(from=1, to=41, by=10)
+page <- seq(from=1, by=10, length.out = 5)
+
+list <- c()
+for(date_i in Date){
+  for(page_i in page){
+    dt <- format(as.Date(date_i, origin="1970-01-01"), "%Y.%m.%d")
+    naver <- paste0(url_1, Keyword, url_2, Date, url_3, Date, url_4, page)
+    list <- c(list, naver)
+  }
+}
+
+head(list, 5)
+
+
+url <- "https://search.naver.com/search.naver?&where=news&query=아파트+정책&pd=3&ds=2020-05-01&de=2020-05-01&start=1"
+
+html <- read_html(url[1])
+temp <- unique(html_nodes(html, '#sp_nws1')%>%
+                 html_nodes(css='news_wrap api_ani_send')%>%
+                 html_nodes(css='news_area')%>%
+                 html_nodes(css='news_info')%>%
+                 html_nodes(css="api_save_group _keep_wrap")%>%
+                 html_nodes(css="info_group")%>%
+                 html_nodes(css="info press")%>%
+                 html_nodes('a')%>%
+                 html_attr('href'))
+head(temp,5)
 ```
