@@ -34,3 +34,8 @@ prc.model <- lm(price~PC1+PC2+PC3+PC4, data = train1) # 회귀분석
 
 summary(prc.model) #모델 평가
 ```
+
+```{r}
+a<-read.csv("서울시 재개발 재건축 정비사업 현황.csv")
+```
+
