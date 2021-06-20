@@ -1,5 +1,5 @@
 ---
-title: '1'
+title: '데이터 전처리'
 author: "성원호"
 date: "6/14/2021"
 output: html_document
@@ -9,6 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+# 데이터 가져오기
 ```{r cars}
 library(tidyverse)
 library(httr)
@@ -21,36 +22,41 @@ library(dplyr)
 library(stringr)
 library(plyr)
 
+# 공공 데이터 포털에서 오픈 api로 데이터를 가져오기로 함
 api_url <- ("http://openapi.molit.go.kr/OpenAPI_ToolInstallPackage/service/rest/RTMSOBJSvc/getRTMSDataSvcAptTradeDev")
 
+# 발급받은 api key
 serviceKey <- "?serviceKey=SXM95ObeVzJHvCml1hH2pcyQ1J886%2FIFibpl7t5G1HsWJJOqOXP%2Fy2JNPEYG1bhiUAkG%2FkBXU585UfekK3rhHg%3D%3D"
 
-local_code <- c("11110","11140","11170","11200","11215","11230","11260","11290","11305","11320","11350","11380","11410","11440","11470","11500","11530","11545","11560","11590", "11620","11650","11680","11710","11740")
-
-locCode <-c("11110","11140","11170","11200","11215","11230","11260","11290","11305","11320",
+# 전국 중에서 서울시 지역코드만 추출
+locCode_nm <-c("11110","11140","11170","11200","11215","11230","11260","11290","11305","11320",
             "11350","11380","11410","11440","11470","11500","11530","11545","11560","11590",
             "11620","11650","11680","11710","11740")
 
-locCode_nm <-c("종로구","중구","용산구","성동구","광진구","동대문구","중랑구","성북구","강북구","도봉구",
+# 서울시 구 추출
+locCode <-c("종로구","중구","용산구","성동구","광진구","동대문구","중랑구","성북구","강북구","도봉구",
                "노원구","은평구","서대문구","마포구","양천구","강서구","구로구","금천구","영등포구","동작구",
                "관악구","서초구","강남구","송파구","강동구")
 
+# 분석 데이터는 2020년 5월부터 2021년 5월까지로 설정
 datelist <-c("202005","202006","202007","202008","202009","202010","202011","202012","202101","202102","202103","202104","202105")
 
+# URL을 긁어와 전체 데이터를 추출하기 위해 빈 리스트를 하나 만들고 카운트 변수 할당
 urllist <- list()
 cnt <-0
 
+# 데이터 리스트를 추출하기 위해 반복문을 만듬
 for(i in 1:length(locCode)){
     for(j in 1:length(datelist)){
         cnt = cnt + 1
         urllist[cnt] <- paste0(api_url,serviceKey, "&pageNo=1", "&numOfRows=1000", "&LAWD_CD=",locCode[i],"&DEAL_YMD=", datelist[j]) 
   }
 }
-```
 
-```{r}
+# 전체 데이터를 담기 위해 url 리스트를 긁어와야함
 total<-list()
 
+# xml 형식으로 전체 url을 긁어옴
 for(i in 1:length(urllist)){
     
     apt <- list()
@@ -62,7 +68,7 @@ for(i in 1:length(urllist)){
 
     size <- xmlSize(items)
     
-    for(j in 1:size){
+    for(j in 1:size){ # 할당해야하는 컬럼들만 추출
         apt <- xmlSApply(items[[j]],xmlValue)
         apt_data <- data.table( price = item_temp[1],
                                     con_year = item_temp[2],
@@ -80,48 +86,55 @@ for(i in 1:length(urllist)){
                                     )
         item[[j]]<- apt_data
     }
-    total[[i]] <- rbindlist(item)
+    total[[i]] <- rbindlist(item) # 데이터 프레임 형태로 정리
 }
 
-APT_2021 <- rbindlist(total)
+APT_2021 <- rbindlist(total) # 변수에 데이터프레임 할당
 
-head(APT_2021)
-
-sum(is.na(APT_2021$gu))
+head(APT_2021) # 결과 확인
+# write.csv(APT_2021, APT2021.csv)
 ```
 
+# 데이터 전처리
 ```{r}
 high_edu <- read.csv("고등교육기관 주소록.csv", fileEncoding = "CP949", encoding = "UTF-8")
+# 서울에 해당하는 고등교육기관만 추출
 high <- subset(high_edu, 시도=="서울")
+# 불필요한 컬럼 제거
 high_2 <- high[, -c(1,2,3,6,7,8,9,10,11,12,13,14)]
 
 element_edu <- read.csv("유초중등교육기관 주소록.csv",fileEncoding = "CP949", encoding = "UTF-8")
+# 서울에 해당하는 유초중등교육기관만 추출
 element <- subset(element_edu, 시도=="서울")
+# 불필요한 컬럼 제거
 element_2 <- element[,-c(1,2,3,4,5,7,9,10,11,12,13,14,15,16,17)]
 
+# 교육기관끼리 병합
 education <- full_join(high_2, element_2)
+# 결과 확인
 head(education);tail(education)
+# 병합한 행에서 컬럼 이름을 하나로 통일 후 통일된 컬럼 기준으로 교육기관 합산
 education_final <- dplyr::rename(education, "gu" = "행정구")
 education_final <- education_final %>%
   dplyr::group_by(gu) %>%
   dplyr::summarise(
     gu_num = n()
   )
-education_final
-```
-
-```{r}
 
 rail <- read.csv("전국도시철도역사정보표준데이터.csv",fileEncoding = "CP949", encoding = "UTF-8")
+# 서울에 존재하는 지하철 노선만 할당
 rail_seoul <- subset(rail, (노선명 == '경의중앙선'| 노선명 == '경원선'| 노선명 == '분당선'| 노선명 == '경춘선'| 노선명 == '수인선'| 노선명 == '서울 도시철도 1호선'| 노선명 == '서울 도시철도 2호선'| 노선명 == '서울 도시철도 3호선'| 노선명 == '서울 도시철도 4호선'| 노선명 == '서울 도시철도 5호선'| 노선명 == '서울 도시철도 6호선'| 노선명 == '서울 도시철도 7호선'| 노선명 == '서울 도시철도 8호선'| 노선명 == '서울 도시철도 9호선'))
+# 불필요한 컬럼 제거
 rail_total <- rail_seoul[,-c(1,3,4,5,6,7,8,9,10,11,12,14,15,16,17)]
 head(rail_total)
 
+# 각 지역마다 존재하는 노선을 구해야하기 때문에 개인적으로 함수를 만들어줌
 rail_loc <- function(x){
   seoul <- filter(rail_total, grepl(x, 역사도로명주소))
   return(seoul)
 }
 
+# 25개의 구가 존재하므로 각 구마다 함수를 이용해 변수 할당
 rail_1 <- rail_loc("강서구") ;rail_2 <- rail_loc("양천구")
 rail_3 <- rail_loc("구로구"); rail_4 <- rail_loc("영등포구")
 rail_5 <- rail_loc("금천구"); rail_6 <- rail_loc("동작구")
@@ -136,6 +149,7 @@ rail_21 <- rail_loc("용산구") ;rail_22 <- rail_loc("종로구")
 rail_23 <- rail_loc("서대문구") ;rail_24 <- rail_loc("마포구")
 rail_25 <- rail_loc("은평구")
 
+# 도로명주소 구의 정식 명칭으로 통일
 rail_1$역사도로명주소= c("강서구") ; rail_2$역사도로명주소 = c("양천구")
 rail_3$역사도로명주소 = c("구로구") ;rail_4$역사도로명주소 = c("영등포구")
 rail_5$역사도로명주소 = c("금천구") ;rail_6$역사도로명주소 = c("동작구")
@@ -150,11 +164,12 @@ rail_21$역사도로명주소 = c("용산구") ;rail_22$역사도로명주소 = 
 rail_23$역사도로명주소 = c("서대문구") ;rail_24$역사도로명주소 = c("마포구")
 rail_25$역사도로명주소 = c("은평구")
 
+# 전체 구를 주소 기준으로 병합
 rail_seoul_total <- join_all(list(rail_1,rail_2,rail_3,rail_4,rail_5,rail_6,rail_7,rail_8,rail_9,rail_10,rail_11,rail_12,rail_13,rail_14,rail_15,rail_16,rail_17,rail_18,rail_19,rail_20,rail_21,rail_22,rail_23,rail_24,rail_25), by="역사도로명주소", type="full")
 head(rail_seoul_total)
-library(dplyr)
-names(rail_seoul_total)[2] <- "gu"
 
+# 각 구별 지하철 노선 합산
+names(rail_seoul_total)[2] <- "gu"
 rail_final <- rail_seoul_total %>%
   group_by(gu) %>%
   dplyr::summarise(
@@ -162,10 +177,12 @@ rail_final <- rail_seoul_total %>%
   )
 
 park <- read.csv("서울시 주요 공원현황.csv",fileEncoding = "CP949", encoding = "UTF-8")
+# 불필요한 컬럼, 서울이 아닌 장소 제거
 park_seoul <- park[-c(3),-c(1,3,4,5,6,7,8,9,10,11,13,14,15,16,17,18,19,20)]
-head(park_seoul) #구
-names(park_seoul)[2] <- "gu"
+head(park_seoul)
 
+# 각 구별 공원 합산
+names(park_seoul)[2] <- "gu"
 park_final <- park_seoul %>%
   group_by(gu) %>%
   dplyr::summarise(
@@ -174,17 +191,20 @@ park_final <- park_seoul %>%
 park_final <- park_final[-c(1),]
 
 hospital <- read.csv("병원 주소록.csv",fileEncoding = "CP949", encoding = "UTF-8")
+# 서울인 병원만 추출
 hospital_seoul <- subset(hospital, 시도=="서울")
 
 health <- read.csv("보건소 주소록.csv",fileEncoding = "CP949", encoding = "UTF-8")
+# 서울인 보건소만 추출
 health_seoul <- subset(health, 시도=="서울")
 
+# 병합 후 불필요한 행 제거
 heal <- full_join(health_seoul, hospital_seoul)
-heal_total
 heal_total <- heal[,-c(1,2,3,4,5,8,9,10,11)]
 head(heal_total);tail(heal_total)
-names(heal_total)[1] <- "gu"
 
+# 각 구별 의료기관 합산
+names(heal_total)[1] <- "gu"
 heal_final <- heal_total %>%
   group_by(gu) %>%
   dplyr::summarise(
@@ -192,20 +212,23 @@ heal_final <- heal_total %>%
   )
 
 crime <- read.csv("서울시 범죄 현황.csv",fileEncoding = "CP949", encoding = "UTF-8")
-head(crime) #구
+# 불필요한 컬럼 제거
+# 이미 합계가 존재하는 컬럼이 있기 때문에 각 구별 범죄 발생 합계만 추출해줌
 crime_final <- crime[-c(1,2),-c(1,4,5,6,7,8,9,10,11,12,13,14)]
 names(crime_final)[1] <- "gu"
 
 entertain <- read.csv("서울특별시 유흥주점영업 인허가 정보.csv",fileEncoding = "CP949", encoding = "UTF-8")
-head(entertain)
+# 불필요한 컬럼 제거
 entertain_2 <- entertain[,-c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,18,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44)]
 head(entertain_2)
 
+# 각 지역마다 필요한 유흥업소 수를 구해야 하기 때문에 다시 함수를 만들어줌
 enter_seoul <- function(x){
   seoul <- filter(entertain_2, grepl(x, 도로명주소))
   return(seoul)
 }
 
+# 만든 함수로 각 구마다 결과값 할당
 loc_1 <- enter_seoul("강서구") ;loc_2 <- enter_seoul("양천구")
 loc_3 <- enter_seoul("구로구"); loc_4 <- enter_seoul("영등포구")
 loc_5 <- enter_seoul("금천구"); loc_6 <- enter_seoul("동작구")
@@ -220,6 +243,7 @@ loc_21 <- enter_seoul("용산구") ;loc_22 <- enter_seoul("종로구")
 loc_23 <- enter_seoul("서대문구") ;loc_24 <- enter_seoul("마포구")
 loc_25 <- enter_seoul("은평구")
 
+# 도로명 주소를 정식 명칭(구까지만)으로 통일
 loc_1$도로명주소 = c("강서구") ; loc_2$도로명주소 = c("양천구")
 loc_3$도로명주소 = c("구로구") ;loc_4$도로명주소 = c("영등포구")
 loc_5$도로명주소 = c("금천구") ;loc_6$도로명주소 = c("동작구")
@@ -234,76 +258,92 @@ loc_21$도로명주소 = c("용산구") ;loc_22$도로명주소 = c("종로구")
 loc_23$도로명주소 = c("서대문구") ;loc_24$도로명주소 = c("마포구")
 loc_25$도로명주소 = c("은평구")
 
+# 도로명주소를 기준으로 풀조인
 enter_final <- plyr::join_all(list(loc_1, loc_2, loc_3, loc_5,loc_6,loc_7,loc_8,loc_9,loc_10,loc_11,loc_12,loc_13,loc_14,loc_15,loc_16,loc_17,loc_18,loc_19,loc_20,loc_21,loc_22,loc_23,loc_24,loc_25), by="도로명주소", type="full")
-head(enter_final)
-names(enter_final)[1] <- "gu"
 
+# 각 구별 유흥업소 합산
+names(enter_final)[1] <- "gu"
 enter_final <- enter_final %>%
   group_by(gu) %>%
   dplyr::summarise(
     gu_num = n()
   )
 
-apart <- read.csv("APT2021.csv")
-head(apart)
+# api로 가져와 csv로 저장했던 데이터
+apart <- read.csv("APT2021.csv", fileEncoding = "CP949", encoding = "UTF-8")
+head(apart) # 결과 확인
 
+# 다른 컬럼들의 합산 컬럼을 보기 좋게 바꿔줌
 names(crime_final)[2] <- "범죄발생수"
 names(heal_final)[2] <- "보건기관수"
 names(education_final)[2] <- "교육기관수"
 names(enter_final)[2] <- "유흥업소수"
 names(park_final)[2] <- "국립공원수"
 names(rail_final)[2] <- "해당 지역 지하철 지점수"
-
-
 ```
 
-
+# 데이터 통합 및 단일화
 ```{r}
+# 정제했던 데이터들을 하나로 묶어줌
 apt_final <- plyr::join_all(list(apart, crime_final, heal_final, education_final, enter_final, park_final, rail_final), by="gu", type="full")
 
+# 불필요한 컬럼 제거
 apt_final <- apt_final[,-c(1,5,6,9)]
+
+# 영어로 된 컬럼들을 한글로 바꿔줌
 names(apt_final)[1] <- "매매가" ; names(apt_final)[2] <- "건축 연도"
 names(apt_final)[3] <- "최근 매매 연도" ; names(apt_final)[4] <- "아파트 이름"
 names(apt_final)[5] <- "최근 매매 월" ; names(apt_final)[6] <- "전용면적"
 names(apt_final)[7] <- "지번" ; names(apt_final)[8] <- "층수"
 names(apt_final)[9] <- "지역코드" ; names(apt_final)[10] <- "지역"
-
 ```
 
 ```{r}
+# 결측값 제거
 apt_final_test <- apt_final %>% na.omit(apt_final)
 
-str(apt_final_test)
+# 전용면적 컬럼이 문자형이므로 숫자형으로 변환
 noquote(apt_final$전용면적)
 apt_final_test$전용면적 <- apt_final_test$전용면적 <- as.numeric(apt_final_test$전용면적)
 
+# 매매가 컬럼에 따옴표, 공백과 쉼표 제거 후 숫자형으로 변환
 apt_final_test$매매가 <- noquote(gsub("\\s", "", apt_final_test$매매가))
 apt_final_test$매매가 <- gsub(",", "", apt_final_test$매매가)
 apt_final_test$매매가 <- as.numeric(apt_final_test$매매가)
 
+# 최근 매매 월 컬럼을 팩터형으로 변환
 apt_final_test$`최근 매매 월` <- as.factor(apt_final_test$`최근 매매 월`)
-str(apt_final_test$`최근 매매 월`)
 
+# 지역코드 컬럼을 팩터형으로 변환
 apt_final_test$지역코드 <- as.factor(apt_final_test$지역코드)
 
+# 범죄발생 수 컬럼에 따옴표와 쉼표 제거
 apt_final_test$범죄발생수 <- noquote(gsub(",","",apt_final_test$범죄발생수))
+# 숫자형으로 변환
 apt_final_test$범죄발생수 <- as.numeric(apt_final_test$범죄발생수)
-str(apt_final_test$범죄발생수)
 
+# 층수 따옴표 제거 후 숫자형 변환
 apt_final_test$층수 <- noquote(apt_final_test$층수)
 apt_final_test$층수 <- as.numeric(apt_final_test$층수)
 
+# 바뀐 데이터 형태 확인
 str(apt_final_test)
 
+# 평 계산 공식 : 전용면적(m^2 * 0.3025)
 apt_final_test$평 <- apt_final_test$전용면적 * 0.3025
+# 소수점 반올림
 apt_final_test$평 <- round(apt_final_test$평)
+
+# 평당가격 : 매매가/평
 apt_final_test$평당가격 <- apt_final_test$매매가/apt_final_test$평
-
+# 소수점 반올림
 apt_final_test$평당가격 <- round(apt_final_test$평당가격)
-str(apt_final_test)
 
+# 결측값 제거
 apt_final_test <- na.omit(apt_final_test)
-apt_final_test
+# 결과 확인
+head(apt_final_test)
 
-write.csv(apt_final_test, "apt_final.csv")
+# 저장, 전처리 종료
+# write.csv(apt_final_test, "apt_real_final.csv")
 ```
