@@ -37,7 +37,19 @@ screeplot(pca.out, type = "l")
 ```
 
 ```{r}
-prc <- as.matrix(apt.centered) %*% pca.out$rotation
+prc <- as.matrix(apt.centered) %*% pca.out$rotation[,1:2]
+model8 <-lm(y_data~pc_scores)
+summary(model8)
 ```
 
+
+```{r}
+boxplot(apt$평당가격)$stats
+
+apt$평당가격<- ifelse(apt$평당가격 < 461 | apt$평당가격 > 7955, NA, apt$평당가격)
+sum(is.na(apt))
+apt<- na.omit(apt)
+
+write.csv(apt, "rn_apt.csv")
+```
 
