@@ -104,10 +104,6 @@ apart_price_2 %>% ggplot(aes(x = 최근.매매.연도 , y = 평당가격, fill =
   theme(axis.title=element_text(size=12))+
   theme(plot.title=element_text(hjust=0.5, size=15, color="black"))
 
-apart_price
-apart_price_2
-apart_price_3
-
 write.csv(apart_price, "apart_price_1.csv")
 write.csv(apart_price_2, "apart_price_2.csv")
 write.csv(apart_price_3, "apart_price_3.csv")
@@ -259,6 +255,7 @@ result_main <- grid.arrange(main_2020, main_2021, ncol = 2) ; result_main
 
 
 ```
+* 가격변동이 가장 컸던 7개의 주요구들은 예상대로 +-20% 범위에서 가격 변동이 심하게 일어나고 있다는 점을 다시 확인할 수 있었다.
 
 # 건축 연도에 따른 시각화
 ```{r}
@@ -274,4 +271,4 @@ apart_price_3 %>% ggplot(aes(x =지역, y=평당가격, color = factor(건축.�
   theme(plot.title=element_text(hjust = 0.5, size = 15, color = "black"))+
   theme(axis.text.x = element_text(angle = 45))
 ```
-
+* 노후된 아파트일 수록 구별 평당가가 낮을 것이라 예상했으나, 오히려 최근에 지어졌던 아파트들의 평균 매매가가 안정적인 가격을 보이고 있으며, 노후된 아파트는 평당 평균가의 양극화 현상이 발생하고 있다는 점을 알 수 있다. 이러한 원인에 대해 알아보고자 이후 독립변수들을 가지고 분석을 진행해보기로 했다.
