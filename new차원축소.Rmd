@@ -20,11 +20,28 @@ screeplot(pca.out, type = "l") #
 ```
 
 ```{r}
-prc <- as.matrix(apt_pca) %*% pca.out$rotation
-train1<- cbind(price, as.data.frame(prc))
-str(train1)
+og<- cbind(price, apt_pca)
+train.og<- og[1:16,c(-1,-2)]
+test.og<- apt_pca[17:24,]
 
-prc.model <- lm(price~PC1+PC2+PC3+PC4+PC5, data = train1) # 회귀분석
+or.model<- lm(price~., data=train.og)
 
-summary(prc.model) #모델 평가
+
 ```
+
+
+```{r}
+# 주성분 분석 결과에 따른 모형
+prc <- as.matrix(apt_pca) %*% pca.out$rotation
+bind.price<- cbind(price, as.data.frame(prc))
+
+train.prc<- bind.price[1:16,]
+test.prc<- price[17:24] # 테스트셋
+
+prc.model <- lm(price~PC1+PC2+PC3+PC4+PC5, data = train.prc) # 회귀분석
+
+pcr.pred<- predict(prc.model, newdata = train.prc)
+
+sqrt(mean((pcr.pred - test.prc)^2))
+```
+
