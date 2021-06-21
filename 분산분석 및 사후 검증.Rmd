@@ -111,6 +111,5 @@ scheffe.test(ano1, "apt_edu", alpha=0.05, console=TRUE)
 ```{r}
 scheffe.test(ano4, "apt_subway", alpha=0.05, console=TRUE)
 ```
-
 -사후검증 결과, 집단(Groups)은 a, b로만 나누어졌다. 즉 독립변수의 2집단의 평균만 유의한 차이를 보이고 있음을 알 수 있다
 
