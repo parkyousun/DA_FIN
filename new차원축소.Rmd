@@ -20,7 +20,6 @@ rownames(gu)<- gu$지역
 price<- gu$평당가격
 
 apt_pca<- log(gu[,c(4,6,8,11,12,13)])
-a<-scale(apt_pca, center = T, scale = F)
 
 cor(apt_pca)
 
