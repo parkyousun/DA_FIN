@@ -1,0 +1,59 @@
+```{r}
+gu<- read.csv("gu_data_3.csv")
+price<- gu$평당가격
+
+# 기본모델
+og.model<- lm(평당가격 ~ 해당.지역.지하철.지점수 + 유흥업소수 + 보건기관수 + 
+    보유도서합계 + 도서관.방문자수 + 여권발급합계, data = gu)
+
+# test, train set
+train.og<- gu[1:16, c(4,6,8,9,11,12,13)]
+test.og<-gu[17:24, c(4,6,8,9,11,12,13)]
+test.og.y<- price[17:24]
+
+# 예측모델
+og.pred<- predict(og.model, newdata = train.og)
+
+#RMSE 확인
+sqrt(mean((og.pred - test.og.y)^2))
+
+```
+
+```{r}
+# 주성분 분석을 위한 전처리
+rownames(gu)<- gu$지역
+
+apt_pca<- log(gu[,c(4,6,8,11,12,13)])
+
+cor(apt_pca)
+
+pca.out<-prcomp(apt_pca, scale. = T)
+pca.out
+
+biplot(pca.out) # 그래프로 축과 데이터 확인
+screeplot(pca.out, type = "l") # 성분 개수 선택을 위한 그래프 확인
+summary(pca.out) # 정확한 값으로 확인
+```
+
+
+```{r}
+# 주성분 분석 결과에 따른 모형
+prc <- as.matrix(apt_pca) %*% pca.out$rotation
+bind.price<- cbind(price, as.data.frame(prc))
+
+# train, test set
+train.prc<- bind.price[1:16,]
+test.prc<- bind.price[17:24,]
+test.prc.y<- price[17:24]
+
+#회귀모델
+prc.model <- lm(price~PC1+PC2+PC3+PC4+PC5, data = train.prc)
+
+#예측모델
+pcr.pred<- predict(prc.model, newdata = test.prc)
+
+# RMSE 확인 - 기본 모델(130.575)보다 감소했음음
+sqrt(mean((pcr.pred - test.prc.y)^2))
+```
+
+
