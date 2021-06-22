@@ -1,3 +1,6 @@
+
+## 7. 차원축소
+
 ```{r}
 gu<- read.csv("gu_data_3.csv")
 price<- gu$평당가격

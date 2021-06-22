@@ -1,4 +1,13 @@
-```{r}
+---
+output:
+  word_document: default
+  html_document: default
+---
+```{r message=FALSE, warning=FALSE}
+library(KoNLP)
+library(rvest)
+library(httr)
+
 url<- "https://search.naver.com/search.naver?where=news&sm=tab_pge&query=%EB%B6%80%EB%8F%99%EC%82%B0%20%EC%A0%95%EC%B1%85&sort=0&photo=3&field=0&pd=3&ds=2020.05.01&de=2021.05.31&cluster_rank=10&mynews=0&office_type=0&office_section_code=0&news_office_checked=&nso=so:r,p:from20200501to20210531,a:all&start="
 
 urls <- NULL
@@ -57,6 +66,7 @@ c_noun <- gsub("\\s+",' ', c_noun)
 c_noun <- gsub("부동산", "", c_noun)
 c_noun <- gsub("부동산정책", "", c_noun)
 c_noun <- gsub("정책", "", c_noun)
+c_noun <- gsub("\\s", "", c_noun)
 c_noun<- c_noun[c_noun != ""]
 
 #합치기
