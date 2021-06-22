@@ -14,18 +14,40 @@ library(jsonlite)
 library(glue)
 library(dplyr)
 apt <- read.csv("APT2021.csv", fileEncoding = "EUC-KR", encoding = "UTF-8")
-apt
+head(apt)
 
-a <- sample_frac(apt, 0.01)
-a
+d_1 <- subset(apt, gu == '강남구') ; d1 <- d_1[sample(nrow(d_1), 40), ]
+d_2 <- subset(apt, gu == '강서구') ; d2 <- d_2[sample(nrow(d_2), 40), ]
+d_3 <- subset(apt, gu == '양천구') ; d3 <- d_3[sample(nrow(d_3), 40), ]
+d_4 <- subset(apt, gu == '구로구') ; d4 <- d_4[sample(nrow(d_4), 40), ]
+d_5 <- subset(apt, gu == '금천구') ; d5 <- d_5[sample(nrow(d_5), 40), ]
+d_6 <- subset(apt, gu == '영등포구') ; d6 <- d_6[sample(nrow(d_6), 40), ]
+d_7 <- subset(apt, gu == '동작구') ; d7 <- d_7[sample(nrow(d_7), 40), ]
+d_8 <- subset(apt, gu == '서초구') ; d8 <- d_8[sample(nrow(d_8), 40), ]
+d_9 <- subset(apt, gu == '송파구') ; d9 <- d_9[sample(nrow(d_9), 40), ]
+d_10 <- subset(apt, gu == '강동구') ; d10 <- d_10[sample(nrow(d_10), 40), ]
+d_11 <- subset(apt, gu == '광진구') ; d11 <- d_11[sample(nrow(d_11), 40), ]
+d_12 <- subset(apt, gu == '성동구') ; d12 <- d_12[sample(nrow(d_12), 40), ]
+d_13 <- subset(apt, gu == '용산구') ; d13 <- d_13[sample(nrow(d_13), 40), ]
+d_14 <- subset(apt, gu == '마포구') ; d14 <- d_14[sample(nrow(d_14), 40), ]
+d_15 <- subset(apt, gu == '서대문구') ; d15 <- d_15[sample(nrow(d_15), 40), ]
+d_16 <- subset(apt, gu == '은평구') ; d16 <- d_16[sample(nrow(d_16), 40), ]
+d_17 <- subset(apt, gu == '종로구') ; d17 <- d_17[sample(nrow(d_17), 40), ]
+d_18 <- subset(apt, gu == '중구') ; d18 <- d_18[sample(nrow(d_18), 40), ]
+d_19 <- subset(apt, gu == '동대문구') ; d19 <- d_19[sample(nrow(d_19), 40), ]
+d_20 <- subset(apt, gu == '성북구') ; d20 <- d_20[sample(nrow(d_20), 40), ]
+d_21 <- subset(apt, gu == '중랑구') ; d21 <- d_21[sample(nrow(d_21), 40), ]
+d_22 <- subset(apt, gu == '강북구') ; d22 <- d_22[sample(nrow(d_22), 40), ]
+d_23 <- subset(apt, gu == '도봉구') ; d23 <- d_23[sample(nrow(d_23), 40), ]
+d_24 <- subset(apt, gu == '노원구') ; d24 <- d_24[sample(nrow(d_24), 40), ] 
+d_25 <- subset(apt, gu == '관악구') ; d25 <- d_25[sample(nrow(d_25), 40), ]
 
-res <- GET(url = 'https://dapi.kakao.com/v2/local/search/address.json',
-           query = list(query = '서울특별시 종로구 사직로 161'),
-           add_headers(Authorization = Sys.getenv('KAKAO_MAP_API_KEY')))
-print(x = res)
-coord$message
+dt <- plyr::join_all(list(d1,d2,d3,d4,d5,d6,d7,d8,d9,d10,
+                     d11,d12,d13,d14,d15,d16,d17,d18,d19,
+                     d20,d21,d22,d23,d24,d25),
+                     type = 'full')
 
-df <- a %>%
+df <- dt %>%
   mutate(지번주소 =str_c(dong, bungi, sep=' '))%>%
   select(aptnm, 지번주소) %>%
   group_by(aptnm, 지번주소)
@@ -54,6 +76,7 @@ for (i in 1:nrow(x = df)){
 is.na(x = df$위도) %>% sum()
 
 df <- dplyr::filter(.data= df, is.na(x= 위도) == FALSE)
+df
 
 write.csv(df, "위도,경도 테스트.csv")
 ```
