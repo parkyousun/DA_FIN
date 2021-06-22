@@ -1,0 +1,33 @@
+```{r}
+url<- "https://search.naver.com/search.naver?where=news&sm=tab_pge&query=%EB%B6%80%EB%8F%99%EC%82%B0%20%EC%A0%95%EC%B1%85&sort=0&photo=3&field=0&pd=3&ds=2020.05.01&de=2021.05.31&cluster_rank=10&mynews=0&office_type=0&office_section_code=0&news_office_checked=&nso=so:r,p:from20200501to20210531,a:all&start="
+
+urls <- NULL
+title <- NULL
+contents <- NULL
+
+
+for(i in seq(1, 3991, by = 10)){
+  news_url <- read_html(paste0(url, i))
+  
+  #뉴스 크롤링
+  #뉴스 제목 크롤링
+  title_j<- news_url %>%
+    html_nodes('#sp_nws11 > div > div > a') %>%
+    html_text()
+  title<- append(title, title_j)
+  #sp_nws32 > div > div > div.news_dsc > div > a
+  #sp_nws31 > div > div > div.news_dsc
+  #sp_nws32 > div > div > a
+  #뉴스 내용 크롤링
+  content_j<- news_url %>%
+    html_nodes('#sp_nws11 > div > div > div.news_dsc > div > a') %>%
+    html_text()
+  contents<- append(contents, content_j)
+}
+naver_news<- data.frame(title, contents)
+
+write.csv(naver_news, "naver_news.csv")
+
+
+```
+
