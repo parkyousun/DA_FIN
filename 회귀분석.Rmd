@@ -1,0 +1,33 @@
+```{r}
+gu<- read.csv("gu_data_3.csv")
+
+gu<- gu[,c(-1,-2,-11)]
+
+all_reg<- lm(평당가격 ~ ., data = gu)
+summary(all_reg)
+```
+
+```{r}
+full<- lm(`평당가격` ~`해당.지역.지하철.지점수`+국립공원수+범죄발생수+유흥업소수+교육기관수+보건기관수+합계_자가용+ 보유도서합계+도서관.방문자수+여권발급합계+은행합계+미세먼지평균 , data= gu)
+
+#후진선택
+step2<- step(full, direction="backward")
+
+#후진선택에 따른 회귀모델
+gu_reg<- lm(평당가격 ~ 해당.지역.지하철.지점수 + 유흥업소수 + 보건기관수 + 
+    보유도서합계 + 도서관.방문자수 + 여권발급합계, data = gu)
+
+summary(gu_reg)
+```
+
+```{r message=FALSE, warning=FALSE}
+#다중공선성 진단
+library(car)
+vif(gu_reg)
+```
+
+```{r}
+library(sjPlot)
+tab_model(gu_reg, show.se = T, show.ci = F, show.stat = T, auto.label = F, encoding = "EUC-KR")
+```
+
