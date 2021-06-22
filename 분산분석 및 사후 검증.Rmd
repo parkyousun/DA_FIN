@@ -1,0 +1,115 @@
+## 분산분석을 위한 데이터 불러오기
+```{r}
+apt1 <- read.csv("apt_final_1.csv")
+```
+## 교육기관수 분산분석
+```{r}
+quantile(apt1$교육기관수, probs=c(0.33, 0.67))
+# 교육기관수 3분할
+apt1$apt_edu[apt1$교육기관수 < 71] <-  1 
+apt1$apt_edu[apt1$교육기관수 >=71 & apt1$교육기관수 < 82] <- 2 
+apt1$apt_edu[apt1$교육기관수 >=82] <- 3
+
+apt1$apt_edu <-  factor(apt1$apt_edu,levels=c(1,2,3), labels=c("교육기관수가 적은 지역집단", "교육기관수가 중간 정도의 지역집단", "교육기관수가 많은 정도의 지역집단"))
+
+#분산분석 진행
+ano1 <-  aov(평당가격 ~ apt_edu, data=apt1)
+anova(ano1)
+````
+
+## 범죄발생수 분산분석
+```{r}
+quantile(apt1$범죄발생수, probs=c(0.33, 0.67))
+# 범죄발생수 3분할
+apt1$apt_crime[apt1$범죄발생수 < 3313] <-  1 
+apt1$apt_crime[apt1$범죄발생수 >= 3313 & apt1$범죄발생수<4153] <- 2 
+apt1$apt_crime[apt1$범죄발생수 >4153] <- 3
+
+apt1$apt_crime <-  factor(apt1$apt_crime,levels=c(1,2,3), labels=c("범죄발생수가 적은 지역집단", "범죄발생수가 중간 정도의 지역집단","범죄발생수가 많은 정도의 지역집단" ))
+
+#분산분석 진행
+ano2 <-  aov(평당가격 ~ apt_crime, data=apt1)
+anova(ano2)
+
+```
+
+## 보건기관수 분산분석
+```{r}
+quantile(apt1$보건기관수, probs=c(0.33, 0.67))
+# 보건기관수 3분할
+apt1$apt_health[apt1$보건기관수 < 3] <-  1 
+apt1$apt_health[apt1$보건기관수 == 3] <- 2 
+apt1$apt_health[apt1$보건기관수 >3] <- 3 
+
+apt1$apt_health <-  factor(apt1$apt_health,levels=c(1,2,3), labels=c("보건기관수가 적은 지역집단", "보건기관수가 중간 정도의 지역집단","보건기관수가 많은 지역집단"))
+
+#분산분석 진행
+ano3 <-  aov(평당가격 ~ apt_health, data=apt1)
+anova(ano3)
+
+```
+
+## 해당 지역 지하철 지점수 분산분석
+```{r}
+quantile(apt1$해당.지역.지하철.지점수, probs=c(0.33, 0.67))
+# 해당 지역 지하철 지점수 3분할
+apt1$apt_subway[apt1$해당.지역.지하철.지점수 < 10] <-  1 
+apt1$apt_subway[apt1$해당.지역.지하철.지점수 >= 10 & apt1$해당.지역.지하철.지점수 < 15] <- 2 
+apt1$apt_subway[apt1$해당.지역.지하철.지점수>= 15] <- 3
+
+apt1$apt_subway <-  factor(apt1$apt_subway,levels=c(1,2,3), labels=c(" 해당.지역.지하철.지점수가 적은 지역집단","해당.지역.지하철.지점수이 중간인 집단","해당.지역.지하철.지점수가 많은 집단")
+
+#분산분석 진행
+ano4 <-  aov(평당가격 ~ apt_subway, data=apt1)
+anova(ano4)
+
+```
+
+## 건축연도 분산분석
+```{r}
+quantile(apt1$`건축.연도`, probs=c(0.33, 0.67))
+# 건축연도 3분할
+apt1$apt_build[apt1$건축.연도 < 1997] <-  1 
+apt1$apt_build[apt1$건축.연도 >= 1997 & apt1$건축.연도 < 2004] <- 2 
+apt1$apt_build[apt1$건축.연도 >= 2004] <- 3
+
+#분산분석 진행
+ano5 <- aov(평당가격 ~ apt_build, data=apt1)
+anova(ano5)
+
+```
+
+## 유의미한 두 분산분석을 가지고 다시 이원 분산분석 - 상호작용과 주효과
+```{r}
+tw.ano <-  aov(평당가격 ~ apt_edu* apt_subway,data=apt1)
+anova(tw.ano)
+```
+
+- 독립변수의 주효과와 상호작용 효과를 모두 인정한 모형의 분석 결과에서는 성별 변수와 학교성적 변수의 주효과의 F 값은 각각
+12.2458과 8.5353이고,  두변수 모두 집단에 따라 평당가격이 통계적으로 유의한 차이가 있다고 나타남
+- apt_edu와 apt_build의 상호작용 효과는 F값은 0.0033897으로 평당가격에 통계적으로 유의한 영향을 미치고 있는 것으로 나타남
+
+## 집단에 따른 평균 비교
+```{r}
+interaction.plot(apt1$apt_edu,apt1$apt_subway,apt1$평당가격,col=1:3,trace.label="지하철수", xlab="교육기관수", ylab="평당가격",ylim=range(c(3700, 4200)), type="b",fun=function(x) mean(x, na.rm=TRUE))
+
+```
+
+## 사후검증
+## scheffe 사후검증
+### apt_edu에 대한 사후검증
+```{r}
+#install.packages("agricolae")
+library(agricolae)
+# apt_edu에 대한 사후검증
+scheffe.test(ano1, "apt_edu", alpha=0.05, console=TRUE)
+
+-사후검증 결과, 집단(Groups)은 a, b로만 나누어졌다. 즉 독립변수의 2집단의 평균만 유의한 차이를 보이고 있음을 알 수 있다
+```
+
+### apt_subway에 대한 사후검증
+```{r}
+scheffe.test(ano4, "apt_subway", alpha=0.05, console=TRUE)
+```
+-사후검증 결과, 집단(Groups)은 a, b로만 나누어졌다. 즉 독립변수의 2집단의 평균만 유의한 차이를 보이고 있음을 알 수 있다
+
