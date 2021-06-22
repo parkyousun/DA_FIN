@@ -1,0 +1,30 @@
+---
+title: "Untitled"
+author: "성원호"
+date: "6/22/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(geosphere)
+library(dplyr)
+
+apart <- read.csv("위도,경도 테스트.csv")
+apart
+trans <- read.csv("전국도시철도역사정보표준데이터.csv", fileEncoding = "EUC-KR", encoding = "UTF-8")
+
+medic <- read.csv("한국사회보장정보원_보건기관 기본정보_20200901.csv", fileEncoding = "EUC-KR", encoding = "UTF-8")
+colnames(medic[c("X좌표")]) <- c("위도")
+colnames(medic[c("Y좌표")]) <- c("경도")
+head(medic)
+
+
+school <- read.csv("전국초중등학교위치표준데이터.csv",fileEncoding = "EUC-KR", encoding = "UTF-8" )
+
+head(medic); head(school)
+
+location_1 <- distm(apart[,c("경도","위도")], medic[,c("X좌표","Y좌표")], fun=distGeo)
+
+head(location_1)
+```
+
