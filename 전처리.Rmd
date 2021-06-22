@@ -14,6 +14,8 @@ output: html_document
 ### 1.2 할당해야 하는 컬럼만 추출해 변수 할당 후 구별로 합산
 ```{r}
 library(dplyr)
+library(plyr)
+library(stringr)
 high_edu <- read.csv("고등교육기관 주소록.csv")
 high <- subset(high_edu, 시도=="서울")
 high_2 <- high[, -c(1,2,3,6,7,8,9,10,11,12,13,14)]
@@ -23,15 +25,17 @@ element <- subset(element_edu, 시도=="서울")
 element_2 <- element[,-c(1,2,3,4,5,7,9,10,11,12,13,14,15,16,17)]
 
 education <- full_join(high_2, element_2)
-head(education);tail(education)
 education_final <- rename(education, "gu" = "행정구")
 education_final <- education_final %>%
   group_by(gu) %>%
   summarise(
     gu_num = n()
   )
-education_final
+head(education_final)
 ```
+* (1) 고등 교육기관과 유초중등교육기관의 컬럼이 같으므로 서울시에 존재하는 교육기관만 추출 후 불필요한 컬럼 제거
+* (2) 합집합으로 병합 후 데이터의 행정구 컬럼 이름을 gu로 수정(향후 데이터 병합을 위해)
+* (3) 구 단위로 교육기관 합계 산출 
 
 ## 2. 서울시 행정구별 전철역 데이터
 ### 2.1. 전국 도시철도 역사 정보 표준 데이터에서 필요한 열 추출
@@ -79,7 +83,6 @@ rail_25$역사도로명주소 = c("은평구")
 
 rail_seoul_total <- join_all(list(rail_1,rail_2,rail_3,rail_4,rail_5,rail_6,rail_7,rail_8,rail_9,rail_10,rail_11,rail_12,rail_13,rail_14,rail_15,rail_16,rail_17,rail_18,rail_19,rail_20,rail_21,rail_22,rail_23,rail_24,rail_25), by="역사도로명주소", type="full")
 head(rail_seoul_total)
-library(dplyr)
 names(rail_seoul_total)[2] <- "gu"
 
 rail_final <- rail_seoul_total %>%
@@ -88,6 +91,9 @@ rail_final <- rail_seoul_total %>%
     gu_num = n()
   )
 ```
+* (1) 서울시에 존재하는 전철 노선만 할당
+* (2) 불필요한 컬럼 제거 후 역사 도로명 주소를 정식명칭(OO구) 형태로 바꿔줌(향후 데이터 병합 위해)
+* (3) 데이터 병합 후 합계 산출
 
 ##3. 서울시 행정구별 공원 데이터
 ### 3.1. 서울시 주요 공원현황에서 필요한 열만 추출
@@ -105,6 +111,8 @@ park_final <- park_seoul %>%
   )
 park_final <- park_final[-c(1),]
 ```
+* (1) 불필요한 컬럼 제거
+* (2) 합계 산출 후 서울시 내 존재 하지 않는 데이터(1개) 제거
 
 ## 4. 서울시 행정구별 병원 데이터
 ### 4.1. 전국 병원 주소록 데이터에서 서울시에 해당하는 행 추출
@@ -132,6 +140,8 @@ heal_final <- heal_total %>%
     gu_num = n()
   )
 ```
+* (1) 서울시에 존재하는 병원과 보건소만 추출해 합집합 병합
+* (2) 불필요한 컬럼 제거 후 합계 산출
 
 ## 6. 서울시 행정구별 범죄 데이터
 ### 6.1. 서울시 범죄 현황 데이터에서 필요한 열만 추출
@@ -196,6 +206,8 @@ enter_final <- enter_final %>%
     gu_num = n()
   )
 ```
+* (1) 불필요한 컬럼 제거 후 전철 데이터와 마찬가지로 정식 명칭으로 구 통일
+* (2) 데이터 병합 후 합계 산출
 
 ## 8. 아파트 매매정보와 독립 변수들 행정구를 기준으로 합치기
 ```{r}
@@ -209,8 +221,6 @@ names(enter_final)[2] <- "유흥업소수"
 names(park_final)[2] <- "국립공원수"
 names(rail_final)[2] <- "해당 지역 지하철 지점수"
 
-library(stringr)
-
 apt_final <- plyr::join_all(list(apart, crime_final, heal_final, education_final, enter_final, park_final, rail_final), by="gu", type="full")
 
 apt_final <- apt_final[,-c(1,5,6,9)]
@@ -221,6 +231,9 @@ names(apt_final)[7] <- "지번" ; names(apt_final)[8] <- "층수"
 names(apt_final)[9] <- "지역코드" ; names(apt_final)[10] <- "지역"
 
 ```
+* (1) APT2021 = 공공데이터포탈 아파트 실거래가 매매 데이터
+* (2) 컬럼 내용을 더 잘 알아볼 수 있도록 컬럼명 변환 
+* (3) 병합 후 불필요한 컬럼 제거, 이후 영어로 된 컬럼을 한글로 변환
 
 ```{r}
 apt_final_test <- apt_final %>% na.omit(apt_final)
@@ -245,14 +258,25 @@ str(apt_final_test$범죄발생수)
 apt_final_test$층수 <-noquote(apt_final_test$층수)
 apt_final_test$층수 <- as.numeric(apt_final_test$층수)
 
-str(apt_final_test)
+apt_final_test$전용면적 <- round(apt_final_test$전용면적)
 
 apt_final_test$평 <- transform(apt_final_test, "평" = 전용면적 * 0.3025)
 
-apt_final_test$전용면적 <- round(apt_final_test$전용면적)
-apt_final
-write.csv(apt_final, "apt_2021.csv")
+apt_final_test$평당가격 <- apt_final_test$매매가/apt_final_test$평
+
+apt_final_test$평당가격 <- round(apt_final_test$평당가격)
+
+apt_final_test <- na.omit(apt_final_test)
+
+head(apt_final_test)
+
+#write.csv(apt_final, "apt_2021.csv")
 ```
+* (1) 데이터의 결측값 제거
+* (2) 평당 가격 연산에 필요한 아파트 평수를 구하기 위해 불필요한 기호 제거 및 데이터 형태(numeric) 변환
+* (3) 평수 계산(평 = 전용면적 * 0.3025) 이후 평 컬럼 새로 생성하여 할당
+* (4) 평당가격(매매가 / 평) 계산 후 평당가격 할당
+* (5) 데이터 결측값 제거 후 데이터 저장
 
 ## 9. 행정구를 기준으로 병합
 ```{r}
@@ -260,12 +284,9 @@ apt<- read.csv("apt_final_1.csv")
 
 apt_1<- aggregate(평당가격~지역+ 범죄발생수+보건기관수+교육기관수+유흥업소수+국립공원수+해당.지역.지하철.지점수, apt, mean)
 
-str(apt_1)
-apt_1
-
-write.csv(apt_1, "gu_data.csv")
+#write.csv(apt_1, "gu_data.csv")
 ```
-
+* (1) 아파트의 구별 평당가 평균을 구하기 위해 평균 값이 들어간 데이터 생성
 
 ## 10. 아파트 매매정보, 범죄, 보건기관, 교육기관, 유흥업소, 국립공원, 전철역 데이터에 정보도서관, 여권 발급, 자가용, 은행, 미세먼지에 대한 데이터를 행정구를 기준으로 병합
 ```{r}
@@ -278,12 +299,9 @@ car<- car[-1,c(2,5)]
 library<- library[,c(2,5,8)]
 passport<- passport[-1,2:3]
 
-library(dplyr)
-
 car<- rename(car, 지역 = 자치구)
 library<- rename(library, 지역 = 자치구)
 passport<- rename(passport, 지역 = 자치구)
-
 
 a<- merge(gu, car, by = "지역")
 b<- merge(a, library, by="지역")
@@ -298,4 +316,7 @@ c[,12]<-as.numeric(c[,12])
 
 write.csv("gu_data_2.csv")
 ```
-
+* (1) 불필요한 컬럼 제거 후 자치구를 자치구 이름을 지역으로 변환
+* (2) 지역을 기준으로 데이터 통합
+* (3) 편의를 위해 이외의 필요한 컬럼 이름 수정
+* (4) 숫자로 된 데이터의 수치화

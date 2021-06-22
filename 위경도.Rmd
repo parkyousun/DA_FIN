@@ -23,7 +23,22 @@ school <- read.csv("전국초중등학교위치표준데이터.csv",fileEncoding
 
 head(medic); head(school)
 
-location_1 <- distm(apart[,c("경도","위도")], medic[,c("X좌표","Y좌표")], fun=distGeo)
+for (i in 1:nrow)){
+  cat('현재', i, '번째 주소의 위경도 좌표를 얻는 중입니다!\n')
+  res <- GET(url = 'https://dapi.kakao.com/v2/local/search/address.json',
+             query = list(query = df$지번주소[i]),
+             add_headers(Authorization = Sys.getenv('KAKAO_MAP_API_KEY')))
+  
+  tryCatch({
+  coord <- res %>% content(as = 'text') %>% fromJSON()
+  
+   df$위도[i] <- coord$documents$y
+   df$경도[i] <- coord$documents$x
+   
+     Sys.sleep(time = 1)
+  }, error = function(e) cat('--> 에러가 발생하여 건너 뜁니다.\n'))
+
+location_1 <- disteGeo(apart$)
 
 head(location_1)
 ```
