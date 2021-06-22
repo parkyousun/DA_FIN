@@ -1,8 +1,4 @@
----
-output:
-  word_document: default
-  html_document: default
----
+
 ```{r message=FALSE, warning=FALSE}
 library(KoNLP)
 library(rvest)
