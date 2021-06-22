@@ -1,0 +1,86 @@
+```{r}
+url<- "https://search.naver.com/search.naver?where=news&sm=tab_pge&query=%EB%B6%80%EB%8F%99%EC%82%B0%20%EC%A0%95%EC%B1%85&sort=0&photo=3&field=0&pd=3&ds=2020.05.01&de=2021.05.31&cluster_rank=10&mynews=0&office_type=0&office_section_code=0&news_office_checked=&nso=so:r,p:from20200501to20210531,a:all&start="
+
+urls <- NULL
+title <- NULL
+contents <- NULL
+
+
+for(i in seq(1, 3991, by = 10)){
+  news_url <- read_html(paste0(url, i))
+  
+  #뉴스 크롤링
+  #뉴스 제목 크롤링
+  title_j<- news_url %>%
+    html_nodes('#sp_nws11 > div > div > a') %>%
+    html_text()
+  title<- append(title, title_j)
+  
+  #뉴스 내용 크롤링
+  content_j<- news_url %>%
+    html_nodes('#sp_nws11 > div > div > div.news_dsc > div > a') %>%
+    html_text()
+  contents<- append(contents, content_j)
+}
+naver_news<- data.frame(title, contents)
+```
+
+## 1.2. 텍스트 마이닝
+```{r message=FALSE, warning=FALSE}
+#텍스트 마이닝을 위한 패키지 가져오기
+library(KoNLP)
+library(stringr)
+
+t<- as.character(naver_news$title) #질문 내용을 character로 변수 q에 할당
+c<- as.character(naver_news$contents) #답변 내용을 character로 변수 a에 할당
+```
+  - 명사 추출 후 제목,내용 합치기
+```{r message=FALSE, warning=FALSE}
+#기사 제목 명사 추출
+t_noun<- sapply(t, extractNoun, USE.NAMES = F) #명사 추출
+t_noun<- unlist(t_noun) #리스트 풀기
+t_noun<- Filter(function(x){nchar(x) >= 2}, t_noun) #두글 자 이상인 단어만 필터링
+
+#기사 내용 명사 추출
+c_noun<- sapply(c, extractNoun, USE.NAMES = F) #명사 추출
+c_noun<- unlist(c_noun) #리스트 풀기
+c_noun<- Filter(function(x){nchar(x) >= 2 }, c_noun) #두 글자 이상인 단어만 필터링
+
+#필요없는 값 제거
+c_noun <- gsub("[\r\n\t]", ' ', c_noun)
+c_noun <- gsub("[[:punct:]]",' ', c_noun)
+c_noun <- gsub("[[:cntrl:]]", ' ', c_noun)
+c_noun <- gsub("\\d+", ' ', c_noun)
+c_noun <- gsub("[a-z]",' ', c_noun)
+c_noun <- gsub("[A-Z]", ' ', c_noun)
+c_noun <- gsub("\\s+",' ', c_noun)
+c_noun <- gsub("부동산", "", c_noun)
+c_noun <- gsub("부동산정책", "", c_noun)
+c_noun <- gsub("정책", "", c_noun)
+c_noun<- c_noun[c_noun != ""]
+
+#합치기
+tc_noun<- c(t_noun, c_noun)
+```
+
+```{r message=FALSE, warning=FALSE}
+#워드클라우드, 그래프 시각화를 위한 패키지 가져오기
+library(wordcloud2)
+library(ggplot2)
+
+#개수를 세기 위해 table로 변환
+tc_table<- table(tc_noun) 
+
+#빈도수가 가장 높은 것부터 30개 추출
+tc_wc<- head(sort(tc_table, decreasing = T), 50) #개수가 가장 많은 단어들 순서대로 상위 30개 추출
+tc_wc<- data.frame(tc_wc) #데이터 프레임으로 변환
+
+#빈도수에 따른 워드클라우드 그리기
+wordcloud2(data=tc_wc, minSize=10)
+
+#빈도수에 따른 막대 그래프 그리기
+ggplot(tc_wc, aes(x=reorder(tc_noun,Freq), y=Freq, fill = tc_noun)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  labs(title="부동산 정책 네이버 뉴스 크롤링", x="빈도", y="단어")
+```
